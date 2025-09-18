@@ -4,13 +4,20 @@
 # In[1]:
 
 
+import os
 import subprocess
 import sys
-import os
+
 
 # Script to run all tests and return any failures
 def run_tests():
-    test_files = ["wav_lsqr.py", "cheb_fista.py", "cheb_lsqr.py","per_fista.py", "per_lsqr.py"]
+    test_files = [
+        "wav_lsqr.py",
+        "cheb_fista.py",
+        "cheb_lsqr.py",
+        "per_fista.py",
+        "per_lsqr.py",
+    ]
 
     for test_file in test_files:
         print("Testing ", test_file, "...")
@@ -26,4 +33,3 @@ def run_tests():
 
 if __name__ == "__main__":
     run_tests()
-

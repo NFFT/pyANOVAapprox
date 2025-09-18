@@ -1,6 +1,9 @@
 from ANOVAapprox import *
 
-def  bisection(fun, fval, left, right, fleft, fright, max_iter = 10, tol = 1e-15, verbose = False):
+
+def bisection(
+    fun, fval, left, right, fleft, fright, max_iter=10, tol=1e-15, verbose=False
+):
 
     fright -= fval
     fleft -= fval
@@ -31,29 +34,33 @@ def newton(fun, dfun, fval, x, max_iter=10, tol=1e-15, verbose=False):
         df = dfun(x)
 
         if isnan(f) or isnan(df) or abs(df) < 1e-15:
-            break  
+            break
 
         x += (fval - f) / df
 
         if verbose:
-            print(f"residual for Newton: {abs(f - fval)}\n"
-                  f"f: {f} df: {df} fval: {fval} x {x}")
+            print(
+                f"residual for Newton: {abs(f - fval)}\n"
+                f"f: {f} df: {df} fval: {fval} x {x}"
+            )
 
         if abs(f - fval) < tol:
             break
 
-
-
-
     return x
 
-def λ2ξ(lam, what, y, verbose=False):    
+
+def λ2ξ(lam, what, y, verbose=False):
 
     def fun(xi):
         return np.sum(np.abs(what * (y / ((1 / xi) + what)) ** 2))
 
     def dfun(xi):
-        return 2 * np.sum(np.abs(what * (y / ((1 / xi) + what)) ** 2 / ((1 / xi) + what))) * xi**-2
+        return (
+            2
+            * np.sum(np.abs(what * (y / ((1 / xi) + what)) ** 2 / ((1 / xi) + what)))
+            * xi**-2
+        )
 
     fright = np.sum(np.abs(what * (y / (1 + what)) ** 2))
 
@@ -68,10 +75,11 @@ def λ2ξ(lam, what, y, verbose=False):
             fright,
             max_iter=25,
             tol=1e-10,
-            verbose=verbose
+            verbose=verbose,
         )
     else:
         fleft = np.sum(what * (y / what) ** 2)
+
         def inv_fun(xi):
             return fun(1 / xi)
 
@@ -84,33 +92,35 @@ def λ2ξ(lam, what, y, verbose=False):
             fright,
             max_iter=25,
             tol=1e-16,
-            verbose=verbose
+            verbose=verbose,
         )
 
         if xi > 100:
             return xi
 
-    if xi <= 0 or np.isnan(xi) or np.isinf(xi): #später wieder rausnehmen
+    if xi <= 0 or np.isnan(xi) or np.isinf(xi):  # später wieder rausnehmen
         raise RuntimeError(f"λ2ξ: invalid xi before Newton: xi = {xi}")
-
 
     # apply Newton on f(exp(x)). Small solutions can be found more accurate this way and we work our way around negative solutions.
     xi = math.exp(
         newton(
             lambda x: fun(math.exp(x)),
             lambda x: dfun(math.exp(x)) * math.exp(x),
-            lam **2,    
+            lam**2,
             math.log(xi),
             max_iter=50,
             tol=1e-16,
-            verbose=verbose
+            verbose=verbose,
         )
     )
 
-    if abs(fun(xi) - lam **2) > 1:
-        raise RuntimeError(f"λ2ξ: something went wrong minimizing. (residual: {abs(fun(xi) - lam **2)})")
+    if abs(fun(xi) - lam**2) > 1:
+        raise RuntimeError(
+            f"λ2ξ: something went wrong minimizing. (residual: {abs(fun(xi) - lam **2)})"
+        )
 
     return xi
+
 
 def loss2_function(x):
     for i in range(len(x)):
@@ -120,6 +130,7 @@ def loss2_function(x):
             x[i] = (1 - x[i]) ** 2
 
     return x
+
 
 def nabla_loss2_function(x):
     # derivative of quadratic loss:
@@ -132,15 +143,25 @@ def nabla_loss2_function(x):
     return x
 
 
-def fista(ghat, F, y, lam, what, L="adaptive", max_iter=25, classification=False, verbose=False):    
+def fista(
+    ghat,
+    F,
+    y,
+    lam,
+    what,
+    L="adaptive",
+    max_iter=25,
+    classification=False,
+    verbose=False,
+):
 
-    adaptive = (L == "adaptive")
+    adaptive = L == "adaptive"
 
     if adaptive:
         L = 1.0
         eta = 2.0
     else:
-        L = float(L)    
+        L = float(L)
 
     U = [s.u for s in ghat.settings]
 
@@ -149,9 +170,13 @@ def fista(ghat, F, y, lam, what, L="adaptive", max_iter=25, classification=False
 
     def loss_val(coef):
         if classification:
-            return np.sum(loss2_function(y * (F @ coef)))*(1/len(y)) + lam * np.sum(np.abs(coef.data))
+            return np.sum(loss2_function(y * (F @ coef))) * (1 / len(y)) + lam * np.sum(
+                np.abs(coef.data)
+            )
         else:
-            return 0.5 * (np.linalg.norm((F @ coef) - y)**2)  + lam * np.sum(coef.norms(Dict = False, other = what)) 
+            return 0.5 * (np.linalg.norm((F @ coef) - y) ** 2) + lam * np.sum(
+                coef.norms(Dict=False, other=what)
+            )
 
     val = [loss_val(hhat)]
 
@@ -161,54 +186,57 @@ def fista(ghat, F, y, lam, what, L="adaptive", max_iter=25, classification=False
         ghat_old = GroupedCoefficients(ghat.settings, np.copy(ghat.vec()))
         t_old = t
 
-
         if classification:
-            fgrad = F.H @ ((y * nabla_loss2_function(y * (F @ hhat))) / len(y))   #TODO: ghat or hhat
-        else:                
-            fgrad = (F.H @ (F @ hhat - y))
+            fgrad = F.H @ (
+                (y * nabla_loss2_function(y * (F @ hhat))) / len(y)
+            )  # TODO: ghat or hhat
+        else:
+            fgrad = F.H @ (F @ hhat - y)
 
         while True:
             # p_L(hhat)
             if classification:
                 for k in range(len(ghat.data)):
-                    #fhat > 0:
+                    # fhat > 0:
                     if L * hhat[k] - fgrad[k] > lam:
                         ghat[k] = hhat[k] - fgrad[k] / L - lam / L
-                        #fhat < 0:
+                        # fhat < 0:
                     elif fgrad[k] - L * hhat[k] > lam:
                         ghat[k] = hhat[k] - fgrad[k] / L + lam / L
                     else:
                         ghat[k] = 0.0
             else:
                 ghat.set_data((hhat - (1 / L) * fgrad).vec())
-                mask = [(lam / L)**2 < np.sum(np.abs((ghat[u]**2) / what[u])) for u in U]
+                mask = [
+                    (lam / L) ** 2 < np.sum(np.abs((ghat[u] ** 2) / what[u])) for u in U
+                ]
                 U_masked = [u for u, m in zip(U, mask) if m]
 
-                #code mit threads:
-                
+                # code mit threads:
+
                 threads = []
                 h = 0
                 H = len(U_masked)
-                xis = [None]*H
-                
-                def worker(i,u):    
-                    xis[i] = λ2ξ(lam / L, what[u], ghat[u],verbose = verbose)
+                xis = [None] * H
+
+                def worker(i, u):
+                    xis[i] = λ2ξ(lam / L, what[u], ghat[u], verbose=verbose)
 
                 for u in U_masked:
-                    T = threading.Thread(target=worker, args=(h,u))
+                    T = threading.Thread(target=worker, args=(h, u))
                     T.start()
                     threads.append(T)
-                    h = h+1
-                    
+                    h = h + 1
+
                 for T in threads:
                     T.join()
 
-                if H == h +1:
+                if H == h + 1:
                     print("okay!")
 
-                #alternativer code ohne threads:
-                #xis = [λ2ξ(lam / L, what[u], ghat[u], verbose =verbose) for u in U_masked]            
-                
+                # alternativer code ohne threads:
+                # xis = [λ2ξ(lam / L, what[u], ghat[u], verbose =verbose) for u in U_masked]
+
                 for u, xi in zip(U_masked, xis):
 
                     if np.isinf(xi):
@@ -216,49 +244,45 @@ def fista(ghat, F, y, lam, what, L="adaptive", max_iter=25, classification=False
                     else:
                         ghat[u] = ghat[u] / (1 + xi * what[u])
 
-
-
             if not adaptive:
-                val.append(loss_val(hhat))    
+                val.append(loss_val(hhat))
                 break
 
-            #F
-            Fvalue = loss_val(ghat)   
+            # F
+            Fvalue = loss_val(ghat)
 
-            #Q
+            # Q
             if classification:
                 Q = (
-                    (1 / len(y)) * np.sum(loss2_function(y * (F * hhat))) +
-                    np.vdot((ghat - hhat).vec(), fgrad.vec()).real +
-                    L / 2 * np.linalg.norm((ghat - hhat).vec())**2 +
-                    lam * np.sum(np.abs(ghat.vec()))
+                    (1 / len(y)) * np.sum(loss2_function(y * (F * hhat)))
+                    + np.vdot((ghat - hhat).vec(), fgrad.vec()).real
+                    + L / 2 * np.linalg.norm((ghat - hhat).vec()) ** 2
+                    + lam * np.sum(np.abs(ghat.vec()))
                 )
 
-            else: 
+            else:
                 Q = (
-                    np.linalg.norm((F*hhat) - y)**2 / 2 +
-                    np.vdot((ghat - hhat).vec(), fgrad.vec()).real +
-                    L / 2 * np.linalg.norm((ghat - hhat).vec())**2 +
-                    lam * np.sum(ghat.norms(Dict = False, other = what))
+                    np.linalg.norm((F * hhat) - y) ** 2 / 2
+                    + np.vdot((ghat - hhat).vec(), fgrad.vec()).real
+                    + L / 2 * np.linalg.norm((ghat - hhat).vec()) ** 2
+                    + lam * np.sum(ghat.norms(Dict=False, other=what))
                 )
 
-
-            if Fvalue.real < Q + 1e-10 or L >= 2 ** 32:   
+            if Fvalue.real < Q + 1e-10 or L >= 2**32:
                 val.append(Fvalue)
                 break
             else:
                 L *= eta
 
-        #update t
+        # update t
         t = (1 + math.sqrt(1 + 4 * t**2)) / 2
 
-        #update hhat
+        # update hhat
         hhat = ghat + (t_old - 1) / t * (ghat - ghat_old)
 
         # stoping criteria
         resnorm = np.linalg.norm((ghat_old - ghat).vec())
-        if resnorm < 1e-16: 
+        if resnorm < 1e-16:
             break
         if abs(val[-1] - val[-2]) < 1e-16:
             break
-

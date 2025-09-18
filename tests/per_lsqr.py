@@ -1,38 +1,36 @@
 #### PERIODIC TEST SOLVER LSQR ####
 
-import sys
 import os
+import sys
 
-src_aa = os.path.abspath(os.path.join(os.getcwd(), '..', 'src'))
+src_aa = os.path.abspath(os.path.join(os.getcwd(), "..", "src"))
 sys.path.insert(0, src_aa)
 
 # Add the 'src' of Package - GT (where GroupedTransforms.py is)
-src_gt = os.path.abspath(os.path.join(os.getcwd(), '..', '..', 'Package - GT', 'src'))
+src_gt = os.path.abspath(os.path.join(os.getcwd(), "..", "..", "Package - GT", "src"))
 sys.path.insert(0, src_gt)
 
 import ANOVAapprox
-
 import numpy as np
-from ANOVAapprox import *  
+from ANOVAapprox import *
 from TestFunctionPeriodic import *
-
 
 d = 6
 ds = 2
 M = 1000  # should be 10000
 max_iter = 50
-bw = np.array([100, 10], 'int32')   
+bw = np.array([100, 10], "int32")
 lambdas = np.array([0.0, 1.0])
 
 rng = np.random.default_rng()
-X = rng.random((M,d)) - 0.5    
-y = np.array([f(X[i, :].T) for i in range(M)], dtype=complex)   
+X = rng.random((M, d)) - 0.5
+y = np.array([f(X[i, :].T) for i in range(M)], dtype=complex)
 
-X_test = rng.random((M,d)) - 0.5    
-y_test = np.array([f(X_test[i, :].T) for i in range(M)], dtype=complex)   
+X_test = rng.random((M, d)) - 0.5
+y_test = np.array([f(X_test[i, :].T) for i in range(M)], dtype=complex)
 
 
-ads = ANOVAapprox.approx(X, y, ds=ds, basis="per", N=bw)   
+ads = ANOVAapprox.approx(X, y, ds=ds, basis="per", N=bw)
 ads.approximate(lam=lambdas, solver="lsqr")
 
 
@@ -41,8 +39,8 @@ print("AR: ", np.sum(attr_ranking))
 assert abs(np.sum(attr_ranking) - 1) < 1e-4
 
 
-bw = ANOVAapprox.get_orderDependentBW(AS, [128,32])    
-aU = ANOVAapprox.approx(X, y, U=AS, N=bw, basis = "per")     
+bw = ANOVAapprox.get_orderDependentBW(AS, [128, 32])
+aU = ANOVAapprox.approx(X, y, U=AS, N=bw, basis="per")
 aU.approximate(lam=lambdas, solver="lsqr")
 
 
@@ -68,4 +66,3 @@ assert err_l2_ds < 0.01
 assert err_l2_U < 0.005
 assert err_l2_rand_ds < 0.01
 assert err_l2_rand_U < 0.005
-
