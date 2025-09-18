@@ -1,16 +1,14 @@
-import numpy as np
-from scipy.sparse.linalg import lsqr
+import threading
 from math import acos, isnan
+
+import numpy as np
+from GroupedTransforms import *
+from scipy.sparse.linalg import lsqr
 from scipy.special import erf
 from sklearn.metrics import roc_auc_score
-import threading
 
 
-
-from GroupedTransforms import *
-
-
-def bisection(l, r, fun, maxiter=1000):   
+def bisection(l, r, fun, maxiter=1000):
     lval = fun(l)
     rval = fun(r)
 
@@ -37,40 +35,34 @@ def bisection(l, r, fun, maxiter=1000):
     return m
 
 
-from .fista import *
-from .approx import *
 from .analysis import *
+from .approx import *
 from .errors import *
-from .trafos import *    
-
+from .fista import *
+from .trafos import *
 
 # Export functions and classes:
 __all__ = [
-    #from Analysis.py:
-    "get_variances",     
+    # from Analysis.py:
+    "get_variances",
     "get_GSI",
     "get_AttributeRanking",
     "get_ShapleyValues",
-    
-    #from approx.py:
-    "approx",                   
-
-    #from Errors.py:
-    "get_l2_error",               
+    # from approx.py:
+    "approx",
+    # from Errors.py:
+    "get_l2_error",
     "get_mse",
     "get_mad",
     "get_L2_error",
     "get_acc",
     "get_auc",
-    
-    #from trafo.py:
+    # from trafo.py:
     "transform_cube",
     "transform_R",
-
-    #from fista.py:
+    # from fista.py:
     "bisection",
     "newton",
     "λ2ξ",
-    "fista"
+    "fista",
 ]
-
