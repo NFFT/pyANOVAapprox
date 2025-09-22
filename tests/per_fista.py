@@ -7,17 +7,14 @@
 import os
 import sys
 
-src_aa = os.path.abspath(os.path.join(os.getcwd(), "..", "src"))
+src_aa = os.path.abspath(os.path.join(os.getcwd(), "src"))
 sys.path.insert(0, src_aa)
-
-# Add the 'src' of Package - GT (where GroupedTransforms.py is)
-src_gt = os.path.abspath(os.path.join(os.getcwd(), "..", "..", "Package - GT", "src"))
-sys.path.insert(0, src_gt)
 
 import ANOVAapprox
 import numpy as np
 from ANOVAapprox import *
 from TestFunctionPeriodic import AS, f, fc, norm
+from pyGroupedTransforms import *
 
 # In[2]:
 
