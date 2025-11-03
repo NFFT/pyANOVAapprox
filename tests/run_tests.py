@@ -12,11 +12,11 @@ import sys
 # Script to run all tests and return any failures
 def run_tests():
     test_files = [
-#        "wav_lsqr.py",
-        "cheb_fista.py",
-        "cheb_lsqr.py",
-        "per_fista.py",
-        "per_lsqr.py",
+#        "tests/wav_lsqr.py",
+        "tests/cheb_fista.py",
+        "tests/cheb_lsqr.py",
+        "tests/per_fista.py",
+        "tests/per_lsqr.py",
     ]
 
     for test_file in test_files:
