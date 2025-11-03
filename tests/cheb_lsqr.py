@@ -1,23 +1,13 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import os
 import sys
 
 src_aa = os.path.abspath(os.path.join(os.getcwd(), "src"))
 sys.path.insert(0, src_aa)
 
-import ANOVAapprox
 import numpy as np
 import TestFunctionCheb
-from ANOVAapprox import *
+import pyANOVAapprox as ANOVAapprox
 from pyGroupedTransforms import *
-
-# In[2]:
-
 
 d = 8
 ds = 2

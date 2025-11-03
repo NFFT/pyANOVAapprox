@@ -1,27 +1,17 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import os
 import sys
 
 src_aa = os.path.abspath(os.path.join(os.getcwd(), "src"))
 sys.path.insert(0, src_aa)
 
-import ANOVAapprox
 import numpy as np
-from ANOVAapprox import *
+import pyANOVAapprox as ANOVAapprox
 from TestFunctionPeriodic import AS, f, fc, norm
 from pyGroupedTransforms import *
 
-# In[2]:
-
-
 d = 6
 ds = 2
-M = 1000  # eigentlich 10000
+M = 10000
 max_iter = 50
 bw = np.array([100, 10], "int32")
 lambdas = np.array([0.0, 1.0])

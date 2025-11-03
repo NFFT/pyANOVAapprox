@@ -1,4 +1,4 @@
-from ANOVAapprox import *
+from pyANOVAapprox import *
 
 
 def get_variance(a, lam, Dict):  # helpfunction for get_variances

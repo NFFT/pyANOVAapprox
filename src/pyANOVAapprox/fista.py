@@ -1,5 +1,5 @@
-from ANOVAapprox import *
-
+from pyANOVAapprox import *
+from pyGroupedTransforms.GroupedCoefficients import *  #TODO: Kann wahrscheinlich weg sobald in pyGroupedTransform GreoupedTransform exportiert wird
 
 def bisection(
     fun, fval, left, right, fleft, fright, max_iter=10, tol=1e-15, verbose=False
@@ -238,7 +238,6 @@ def fista(
                 # xis = [λ2ξ(lam / L, what[u], ghat[u], verbose =verbose) for u in U_masked]
 
                 for u, xi in zip(U_masked, xis):
-
                     if np.isinf(xi):
                         ghat[u] = 0 * ghat[u]
                     else:

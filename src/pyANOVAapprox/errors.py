@@ -1,4 +1,4 @@
-from ANOVAapprox import *
+from pyANOVAapprox import *
 
 
 def _l2error(a, lam, X, y):  # helpfunction for get_l2error
@@ -164,21 +164,21 @@ def get_acc(a, X=None, y=None, lam=None):
         return {l: _acc(a, l, X, y) for l in list(a.fc)}
 
 
-def _auc(a, lam, X, y):  # helpfunction for get_auc
-    if y is None:
-        y = a.y
-
-    if X is not None:
-        y_eval = a.evaluate(lam, X)
-    else:
-        y_eval = a.evaluate(lam)
-
-    y_sc = (y_eval - np.min(y_eval)) / (np.max(y_eval) - np.min(y_eval))
-    y = np.where(y == -1.0, 0, y)
-    y = np.where(y == 1.0, 1, y)
-    y_int = y.astype(np.int64)
-
-    return roc_auc_score(y_int, y_sc)
+#def _auc(a, lam, X, y):  # helpfunction for get_auc    #TODO: implement ROC AUC Score
+#    if y is None:
+#        y = a.y
+#
+#    if X is not None:
+#        y_eval = a.evaluate(lam, X)
+#    else:
+#        y_eval = a.evaluate(lam)
+#
+#    y_sc = (y_eval - np.min(y_eval)) / (np.max(y_eval) - np.min(y_eval))
+#    y = np.where(y == -1.0, 0, y)
+#    y = np.where(y == 1.0, 1, y)
+#    y_int = y.astype(np.int64)
+#
+#    return roc_auc_score(y_int, y_sc)
 
 
 def get_auc(
