@@ -1,6 +1,7 @@
+from pyGroupedTransforms.GroupedTransform import *  # TODO: Kann wahrscheinlich weg sobald in pyGroupedTransform GreoupedTransform exportiert wird
+
 from pyANOVAapprox import *
 from pyANOVAapprox.fista import *
-from pyGroupedTransforms.GroupedTransform import *  #TODO: Kann wahrscheinlich weg sobald in pyGroupedTransform GreoupedTransform exportiert wird
 
 bases = ["per", "cos", "cheb", "std", "chui1", "chui2", "chui3", "chui4", "mixed"]
 types = {

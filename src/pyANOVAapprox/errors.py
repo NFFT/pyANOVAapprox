@@ -164,7 +164,7 @@ def get_acc(a, X=None, y=None, lam=None):
         return {l: _acc(a, l, X, y) for l in list(a.fc)}
 
 
-#def _auc(a, lam, X, y):  # helpfunction for get_auc    #TODO: implement ROC AUC Score
+# def _auc(a, lam, X, y):  # helpfunction for get_auc    #TODO: implement ROC AUC Score
 #    if y is None:
 #        y = a.y
 #

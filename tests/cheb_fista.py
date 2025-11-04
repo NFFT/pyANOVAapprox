@@ -6,8 +6,9 @@ sys.path.insert(0, src_aa)
 
 import numpy as np
 import TestFunctionCheb
-import pyANOVAapprox as ANOVAapprox
 from pyGroupedTransforms import *
+
+import pyANOVAapprox as ANOVAapprox
 
 d = 8
 ds = 2

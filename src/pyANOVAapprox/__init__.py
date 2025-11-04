@@ -1,14 +1,16 @@
+import math
 import threading
 from math import acos, isnan
-import math
 
 import numpy as np
 from pyGroupedTransforms import *
 from scipy.sparse.linalg import lsqr
 from scipy.special import erf
-#from sklearn.metrics import roc_auc_score
 
-def get_superposition_set(d, ds):    #TODO: Später funktion aut GT verwenden
+# from sklearn.metrics import roc_auc_score
+
+
+def get_superposition_set(d, ds):  # TODO: Später funktion aut GT verwenden
     """
     get_superposition_set( d::Int, ds::Int )::Vector{Vector{Int}}
 
@@ -26,6 +28,7 @@ def get_superposition_set(d, ds):    #TODO: Später funktion aut GT verwenden
         nset = nextnset
 
     return [tuple(item) for item in returnset]
+
 
 def bisection(l, r, fun, maxiter=1000):
     lval = fun(l)

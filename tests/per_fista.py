@@ -5,9 +5,10 @@ src_aa = os.path.abspath(os.path.join(os.getcwd(), "src"))
 sys.path.insert(0, src_aa)
 
 import numpy as np
-import pyANOVAapprox as ANOVAapprox
-from TestFunctionPeriodic import AS, f, fc, norm
 from pyGroupedTransforms import *
+from TestFunctionPeriodic import AS, f, fc, norm
+
+import pyANOVAapprox as ANOVAapprox
 
 d = 6
 ds = 2
