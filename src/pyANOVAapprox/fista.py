@@ -1,5 +1,7 @@
+from pyGroupedTransforms.GroupedCoefficients import *  # TODO: Kann wahrscheinlich weg sobald in pyGroupedTransform GreoupedTransform exportiert wird
+
 from pyANOVAapprox import *
-from pyGroupedTransforms.GroupedCoefficients import *  #TODO: Kann wahrscheinlich weg sobald in pyGroupedTransform GreoupedTransform exportiert wird
+
 
 def bisection(
     fun, fval, left, right, fleft, fright, max_iter=10, tol=1e-15, verbose=False
