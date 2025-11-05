@@ -404,7 +404,7 @@ class approx:
         if (
             lam is not None
         ):  # evaluateANOVAterms( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Matrix{ComplexF64},Matrix{Float64}}
-            for j, u in enumerate(a.U):
+            for j, u in enumerate(self.U):
                 values[:, j] = trafo[u] @ self.fc[lam][u]
             return values
         else:  # evaluateANOVAterms( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Matrix{ComplexF64},Matrix{Float64}}}
@@ -437,20 +437,20 @@ class approx:
         if (
             lam is not None
         ):  # evaluateSHAPterms( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Matrix{ComplexF64},Matrix{Float64}}
-            terms = self.evaluateANOVAterms(a, X, lam)
+            terms = self.evaluateANOVAterms(X, lam)
 
             Dtype = np.complex128 if self.basis == "per" else np.float64
             values = np.zeros((M, d), dtype=Dtype)
 
             for i in range(d):
-                for j, u in enumerate(a.U):
+                for j, u in enumerate(self.U):
                     if i in u:
                         values[:, i] += terms[:, j] / len(u)
             return values
 
         else:  # evaluateSHAPterms( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Matrix{ComplexF64},Matrix{Float64}}}
             results = {}
-            for l in list(a.fc):
+            for l in list(self.fc):
                 terms = self.evaluateANOVAterms(X, l)
 
                 Dtype = np.complex128 if self.basis == "per" else np.float64
