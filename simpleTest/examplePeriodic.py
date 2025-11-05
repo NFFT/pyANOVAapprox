@@ -179,27 +179,21 @@ print("mse = " + str(mse_min))
 
 # In the following we plot the real and the approximated anova term for the subset u=[3]
 
-y_eval_anova = a.evaluateANOVAterms(X=X_test, lam=λ_min) # evaluate all of the ANOVA terms 
-pos = a.U.index((3,)) # find the index for the subset u=[3]
+y_eval_anova = a.evaluateANOVAterms(
+    X=X_test, lam=λ_min
+)  # evaluate all of the ANOVA terms
+pos = a.U.index((3,))  # find the index for the subset u=[3]
 y_eval_anova_3 = y_eval_anova.T[pos]
 
 perm = np.argsort(X_test.T[3])
 X_plot = X_test.T[3][perm]
 y_eval_anova_3_plot = np.real(y_eval_anova_3[perm])
-y_anova_3_plot = -np.exp(np.sin(2*np.pi*X_plot))+1.26607
+y_anova_3_plot = -np.exp(np.sin(2 * np.pi * X_plot)) + 1.26607
 
 plt.figure()
-plt.plot(
-    X_plot,
-    y_eval_anova_3_plot,
-    label="approximation"
-)
-plt.plot(
-    X_plot,
-    y_anova_3_plot,
-    label="ANOVA term" # ... "ANOVA term"]
-)
-plt.title("Approximation of the ANOVA term 4") # title = "..."
-plt.legend() # Zeigt die Labels/Legende an
-plt.grid(True, linestyle='--', alpha=0.7)
+plt.plot(X_plot, y_eval_anova_3_plot, label="approximation")
+plt.plot(X_plot, y_anova_3_plot, label="ANOVA term")  # ... "ANOVA term"]
+plt.title("Approximation of the ANOVA term 4")  # title = "..."
+plt.legend()  # Zeigt die Labels/Legende an
+plt.grid(True, linestyle="--", alpha=0.7)
 plt.show()
