@@ -151,19 +151,29 @@ print("mse = " + str(mse_min))
 # y_approx = a.evaluate(lam=λ_min) # evaluate the approximation at the training points for the regularisation λ_min
 # y_approx = a.evaluate(X=X_test, lam=λ_min) # evaluate the approximation at the points X_test for the regularisation λ_min
 
-# In the following we plot the real and the approximated anova term for the subset u=[4]
+# In the following we plot the real and the approximated anova term for the subset u=[3]
 
-y_eval_anova = a.evaluateANOVAterms(X=X_test, lam=λ_min)
+y_eval_anova = a.evaluateANOVAterms(X=X_test, lam=λ_min) # evaluate all of the ANOVA terms 
+pos = a.U.index((3,)) # find the index for the subset u=[3]
+y_eval_anova_3 = y_eval_anova.T[pos]
 
-#y_eval_anova = ANOVAapprox.evaluateANOVAterms(a, X_test, λ_min) # evaluate all of the ANOVA terms 
-#pos = findfirst(==([4]), a.U) # find the index for the subset u=[4]
-#y_eval_anova_4 = y_eval_anova[:,pos]
+perm = np.argsort(X_test.T[3])
+X_plot = X_test.T[3][perm]
+y_eval_anova_3_plot = np.real(y_eval_anova_3[perm])
+y_anova_3_plot = -np.exp(np.sin(2*np.pi*X_plot))+1.26607
 
-#perm = sortperm(X_test[4,:])
-#X_plot = X_test[4,perm]
-#y_eval_anova_4_plot = real.(y_eval_anova_4[perm])
-#y_anova_4_plot = -exp.(sin.(2 .* pi .* X_plot)) .+ 1.26607
-
-#p3 = Plots.plot(X_plot,[y_eval_anova_4_plot,y_anova_4_plot], reuse = false, title = "Approximation of the ANOVA term 4", labels = ["approximation" "ANOVA term"])
-
-#display(p1); display(p2); p3
+plt.figure()
+plt.plot(
+    X_plot,
+    y_eval_anova_3_plot,
+    label="approximation"
+)
+plt.plot(
+    X_plot,
+    y_anova_3_plot,
+    label="ANOVA term" # ... "ANOVA term"]
+)
+plt.title("Approximation of the ANOVA term 4") # title = "..."
+plt.legend() # Zeigt die Labels/Legende an
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.show()
