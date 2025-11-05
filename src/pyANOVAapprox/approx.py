@@ -95,7 +95,7 @@ class approx:
             U = get_superposition_set(X.shape[1], ds)
 
         if not isinstance(
-            N[0], list
+            N[0], tuple
         ):  # setting N    #approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, U::Vector{Vector{Int}}, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
             ds = max(len(u) for u in U)
 
