@@ -39,9 +39,7 @@ num = np.sum([math.comb(6, k) for k in np.arange(1, 2 + 1)])  # number of used s
 b = M / (
     math.log10(M) * num
 )  # number for the number of frequencies if we use logarithmic oversampling and distribute it evenly to all subsets
-bw = np.array(
-    [math.floor(b / 2) * 2, math.floor(math.sqrt(b) / 2) * 2]
-)  # bandwidths (use even numbers)
+bw = [math.floor(b / 2) * 2, math.floor(math.sqrt(b) / 2) * 2]  # bandwidths (use even numbers)
 # Use all subsets up to ds and use bw[1] many frequences in the the subsets with one element, b[2]^2 many for subsets with two elements and so on
 #
 ########### Variant 2:
@@ -155,9 +153,7 @@ print(
 Umask = np.append(np.array([True]), gsis > 1e-2)
 U = [ads.U[i] for i in np.arange(0, len(Umask))[Umask]]  # get important subsets
 bws = M / (math.log10(M) * (len(U) - 1))  # calculate frequencies per subset
-N = np.array(
-    [math.floor(bws ** (1 / max(1, len(u))) / 2) * 2 for u in U]
-)  # distribute the frequencies evenly and make them even
+N = [math.floor(bws ** (1 / max(1, len(u))) / 2) * 2 for u in U]  # distribute the frequencies evenly and make them even
 N[0] = 0
 
 a = ANOVAapprox.approx(
