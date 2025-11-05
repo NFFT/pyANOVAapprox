@@ -14,7 +14,7 @@ d = 8
 ds = 2
 M = 1000  # eigentlich 10000
 max_iter = 50
-bw = np.array([20, 4], "int32")
+bw = [20, 4]
 lambdas = np.array([0.0, 1.0])
 
 (X, y) = TestFunctionCheb.generateData(M)

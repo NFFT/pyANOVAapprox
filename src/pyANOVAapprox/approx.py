@@ -50,7 +50,7 @@ def get_orderDependentBW(U, N):
         else:
             N_bw[i] = N[len(U[i]) - 1]
 
-    return np.array(N_bw, "int32")
+    return N_bw
 
 
 ### approx:
@@ -86,7 +86,7 @@ class approx:
         ds=None,
     ):
 
-        if N == None or len(N) == 0:
+        if (N == None or len(N) == 0):
             ValueError("please define N")
 
         if (
@@ -95,7 +95,7 @@ class approx:
             U = get_superposition_set(X.shape[1], ds)
 
         if (
-            not isinstance(N[0], list):
+            not isinstance(N[0], list)
         ):  # setting N    #approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, U::Vector{Vector{Int}}, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
             ds = max(len(u) for u in U)
 

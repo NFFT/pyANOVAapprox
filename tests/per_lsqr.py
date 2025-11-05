@@ -16,7 +16,7 @@ d = 6
 ds = 2
 M = 10000  # should be 10000
 max_iter = 50
-bw = np.array([100, 10], "int32")
+bw = [100, 10]
 lambdas = np.array([0.0, 1.0])
 
 rng = np.random.default_rng()
