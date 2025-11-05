@@ -86,7 +86,7 @@ class approx:
         ds=None,
     ):
 
-        if (N == None or len(N) == 0):
+        if N == None or len(N) == 0:
             ValueError("please define N")
 
         if (
@@ -94,8 +94,8 @@ class approx:
         ):  # setting U   #approx(X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, ds::Int, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
             U = get_superposition_set(X.shape[1], ds)
 
-        if (
-            not isinstance(N[0], list)
+        if not isinstance(
+            N[0], list
         ):  # setting N    #approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, U::Vector{Vector{Int}}, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
             ds = max(len(u) for u in U)
 
@@ -116,9 +116,9 @@ class approx:
                     bws[i] = np.array([bw[i]] * len(u), np.int32)
 
             N = bws
-        
+
         else:
-            N = [np.array(u, dtype = np.int32) for u in N]
+            N = [np.array(u, dtype=np.int32) for u in N]
 
         if basis_vect is None:
             basis_vect = []
