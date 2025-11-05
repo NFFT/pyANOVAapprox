@@ -457,7 +457,7 @@ class approx:
                 values = np.zeros((M, d), dtype=Dtype)
 
                 for i in range(d):
-                    for j, u in enumerate(a.U):
+                    for j, u in enumerate(self.U):
                         if i in u:
                             values[:, i] += terms[:, j] / len(u)
                 results[l] = values
