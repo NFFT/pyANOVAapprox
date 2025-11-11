@@ -11,12 +11,7 @@ import pyANOVAapprox as ANOVAapprox
 
 
 def TestFunction(x):
-    return (
-        x[0] * x[4]
-        + 2
-        - np.exp(x[3])
-        + np.sqrt(x[5] + 3 + x[1])
-    )
+    return x[0] * x[4] + 2 - np.exp(x[3]) + np.sqrt(x[5] + 3 + x[1])
 
 
 rng = np.random.default_rng(1234)
@@ -39,12 +34,15 @@ num = np.sum([math.comb(6, k) for k in np.arange(1, 2 + 1)])  # number of used s
 b = M / (
     math.log10(M) * num
 )  # number for the number of frequencies if we use logarithmic oversampling and distribute it evenly to all subsets
-bw = [math.floor(b / 2) * 2, math.floor(math.sqrt(b) / 2) * 2]  # bandwidths (use even numbers)
+bw = [
+    math.floor(b / 2) * 2,
+    math.floor(math.sqrt(b) / 2) * 2,
+]  # bandwidths (use even numbers)
 # Use all subsets up to ds and use bw[1] many frequences in the the subsets with one element, b[2]^2 many for subsets with two elements and so on
 #
 ########### Variant 2:
 # used subsets:
-# U = [(), (0,), (1,), (2,), (3,), (4,), (5,), 
+# U = [(), (0,), (1,), (2,), (3,), (4,), (5,),
 #      (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (1, 2), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4), (2, 5), (3, 4), (3, 5), (4, 5)]
 # Bandwidths for these subsets:
 # N = [0 ,  100,  100,  100,  100,  100,  100,
@@ -53,7 +51,7 @@ bw = [math.floor(b / 2) * 2, math.floor(math.sqrt(b) / 2) * 2]  # bandwidths (us
 #
 ########### Variant 3:
 # used subsets:
-# U = [(),   (0,),   (1,),   (2,),   (3,),   (4,),   (5,), 
+# U = [(),   (0,),   (1,),   (2,),   (3,),   (4,),   (5,),
 #        (0, 1),  (0, 2),  (0, 3),  (0, 4),  (0, 5),  (1, 2),  (1, 3),  (1, 4),  (1, 5),  (2, 3),  (2, 4),  (2, 5),  (3, 4),  (3, 5),  (4, 5)]
 # Bandwidths for these subsets:
 # N = [(), (100,), (100,), (100,), (100,), (100,), (100,),
@@ -156,7 +154,9 @@ print(
 Umask = np.append(np.array([True]), gsis > 1e-2)
 U = [ads.U[i] for i in np.arange(0, len(Umask))[Umask]]  # get important subsets
 bws = M / (math.log10(M) * (len(U) - 1))  # calculate frequencies per subset
-N = [math.floor(bws ** (1 / max(1, len(u))) / 2) * 2 for u in U]  # distribute the frequencies evenly and make them even
+N = [
+    math.floor(bws ** (1 / max(1, len(u))) / 2) * 2 for u in U
+]  # distribute the frequencies evenly and make them even
 N[0] = 0
 
 a = ANOVAapprox.approx(
