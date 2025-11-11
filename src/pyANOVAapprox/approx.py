@@ -243,9 +243,6 @@ class approx:
                 )
 
             def rmatv(f):
-                print(self.trafo.H)
-                print(f[:M])
-                print(len(f[:M]))
                 return (self.trafo.H @ f[:M]).vec() + (diag_w_sqrt * f[M:])
 
             F_vec = DeferredLinearOperator(
