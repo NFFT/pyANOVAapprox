@@ -1,4 +1,4 @@
-#from pyGroupedTransforms.GroupedTransform import *  # TODO: Kann wahrscheinlich weg sobald in pyGroupedTransform GreoupedTransform exportiert wird
+# from pyGroupedTransforms.GroupedTransform import *  # TODO: Kann wahrscheinlich weg sobald in pyGroupedTransform GreoupedTransform exportiert wird
 
 from pyANOVAapprox import *
 from pyANOVAapprox.fista import *

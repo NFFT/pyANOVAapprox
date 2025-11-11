@@ -9,10 +9,14 @@ import numpy as np
 
 import pyANOVAapprox as ANOVAapprox
 
+
 def TestFunction(x):
-    e = (abs(x[1]+1.0j*x[2])+(np.angle(x[1]+1.0j*x[2])/(math.pi*8))) % 0.25>0.125
-    return e*2-1
-    
+    e = (
+        abs(x[1] + 1.0j * x[2]) + (np.angle(x[1] + 1.0j * x[2]) / (math.pi * 8))
+    ) % 0.25 > 0.125
+    return e * 2 - 1
+
+
 rng = np.random.default_rng(1234)
 
 ##################################
@@ -85,8 +89,8 @@ ads.approximate(max_iter=max_iter, lam=lambdas)
 ## get classification accuracy ##
 #################################
 
-y_approx = ads.evaluate(X=X_test, lam=0.0) # evaluate the classification
-acc = sum(np.sign(y_approx) == y_test)/M_test # calculate the accuracity
+y_approx = ads.evaluate(X=X_test, lam=0.0)  # evaluate the classification
+acc = sum(np.sign(y_approx) == y_test) / M_test  # calculate the accuracity
 print("accuracity = " + str(acc))
 
 ###############################################
@@ -156,30 +160,31 @@ a = ANOVAapprox.approx(
     X, y, U, N, "cos", classification=True
 )  # generate the data structure for the classification
 a.approximate(
-    lam=lambdas,
-    max_iter=max_iter
+    lam=lambdas, max_iter=max_iter
 )  # do the approximation for all specified regularisation parameters
 
-y_approx = a.evaluate(X=X_test, lam=0.0) # evaluate the classification
-acc = sum(np.sign(y_approx) == y_test)/M_test # calculate the accuracity
+y_approx = a.evaluate(X=X_test, lam=0.0)  # evaluate the classification
+acc = sum(np.sign(y_approx) == y_test) / M_test  # calculate the accuracity
 print("accuracity = " + str(acc))
 
 ########################
 ## Evaluate the model ##
 ########################
 
-#y_approx = a.evaluate(X=X_test) # evaluate the classification at the training points for the regularisation λ_min
-y_approx = a.evaluate(X=X_test, lam=0.0) # evaluate the classification at the points X_test for the regularisation λ_min
+# y_approx = a.evaluate(X=X_test) # evaluate the classification at the training points for the regularisation λ_min
+y_approx = a.evaluate(
+    X=X_test, lam=0.0
+)  # evaluate the classification at the points X_test for the regularisation λ_min
 
 plt.figure()
 scatter = plt.scatter(
-    X_test[:,1],
-    X_test[:,2],
-    c=np.sign(y_approx), 
-    cmap='winter',      
-    s=100,               
-    alpha=0.8,          
-    edgecolors='black',  
-    linewidths=0.5     
+    X_test[:, 1],
+    X_test[:, 2],
+    c=np.sign(y_approx),
+    cmap="winter",
+    s=100,
+    alpha=0.8,
+    edgecolors="black",
+    linewidths=0.5,
 )
 plt.show()
