@@ -84,7 +84,7 @@ print("Total number of used parameters = " + str(len(anova_model.fc[lambdas[0]].
 gsis = ANOVAapprox.get_GSI(
     anova_model, 0.0
 )  # calculates indices for importance of terms (gsis is vector, with indices belonging to terms in anova_model.U)
-gsis_as_dict = ANOVAapprox.get_GSI(anova_model,0.0,dict=true)
+gsis_as_dict = ANOVAapprox.get_GSI(anova_model, 0.0, dict=true)
 
 y_min_calc = 10 ** (np.min(np.log10(gsis)) - 0.5)
 label = list(anova_model.U[1:])
