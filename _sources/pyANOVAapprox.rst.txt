@@ -1,0 +1,53 @@
+pyANOVAapprox package
+=====================
+
+Submodules
+----------
+
+pyANOVAapprox.analysis module
+-----------------------------
+
+.. automodule:: pyANOVAapprox.analysis
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+pyANOVAapprox.approx module
+---------------------------
+
+.. automodule:: pyANOVAapprox.approx
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+pyANOVAapprox.errors module
+---------------------------
+
+.. automodule:: pyANOVAapprox.errors
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+pyANOVAapprox.fista module
+--------------------------
+
+.. automodule:: pyANOVAapprox.fista
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+pyANOVAapprox.trafos module
+---------------------------
+
+.. automodule:: pyANOVAapprox.trafos
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: pyANOVAapprox
+   :members:
+   :show-inheritance:
+   :undoc-members:
