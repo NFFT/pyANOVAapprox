@@ -1,6 +1,6 @@
 # pip install pyANOVAapprox
 
-# Example for approximating an periodic function
+# Example for approximating an non periodic function
 
 import math
 
@@ -12,10 +12,10 @@ import pyANOVAapprox as ANOVAapprox
 
 def TestFunction(x):
     return (
-        np.sin(4 * np.pi * x[0] * x[4])
+        x[0] * x[4]
         + 2
-        - np.exp(np.sin(2 * np.pi * x[3]))
-        + np.sin(4 * np.pi * x[5] * x[1]) ** 2
+        - np.exp(x[3])
+        + np.sqrt(x[5] + 3 + x[1])
     )
 
 
@@ -39,15 +39,12 @@ num = np.sum([math.comb(6, k) for k in np.arange(1, 2 + 1)])  # number of used s
 b = M / (
     math.log10(M) * num
 )  # number for the number of frequencies if we use logarithmic oversampling and distribute it evenly to all subsets
-bw = [
-    math.floor(b / 2) * 2,
-    math.floor(math.sqrt(b) / 2) * 2,
-]  # bandwidths (use even numbers)
+bw = [math.floor(b / 2) * 2, math.floor(math.sqrt(b) / 2) * 2]  # bandwidths (use even numbers)
 # Use all subsets up to ds and use bw[1] many frequences in the the subsets with one element, b[2]^2 many for subsets with two elements and so on
 #
 ########### Variant 2:
 # used subsets:
-# U = [(), (0,), (1,), (2,), (3,), (4,), (5,),
+# U = [(), (0,), (1,), (2,), (3,), (4,), (5,), 
 #      (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (1, 2), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4), (2, 5), (3, 4), (3, 5), (4, 5)]
 # Bandwidths for these subsets:
 # N = [0 ,  100,  100,  100,  100,  100,  100,
@@ -56,7 +53,7 @@ bw = [
 #
 ########### Variant 3:
 # used subsets:
-# U = [(),   (0,),   (1,),   (2,),   (3,),   (4,),   (5,),
+# U = [(),   (0,),   (1,),   (2,),   (3,),   (4,),   (5,), 
 #        (0, 1),  (0, 2),  (0, 3),  (0, 4),  (0, 5),  (1, 2),  (1, 3),  (1, 4),  (1, 5),  (2, 3),  (2, 4),  (2, 5),  (3, 4),  (3, 5),  (4, 5)]
 # Bandwidths for these subsets:
 # N = [(), (100,), (100,), (100,), (100,), (100,), (100,),
@@ -69,20 +66,22 @@ lambdas = np.array([0.0, 1.0])  # used regularisation parameters λ
 ## Generation of the data ##
 ############################
 
-X = rng.random((M, d)) - 0.5  # construct the evaluation points for training
+X = 2 * rng.random((M, d)) - 1  # construct the evaluation points for training
+X = np.sin(np.pi * (X - 0.5))
 y = np.array(
-    [TestFunction(X[i, :].T) for i in range(M)], dtype=complex
+    [TestFunction(X[i, :].T) for i in range(M)]
 )  # evaluate the function at these points
-X_test = rng.random((M_test, d)) - 0.5  #
+X_test = 2 * rng.random((M_test, d)) - 1  #
+X_test = np.sin(np.pi * (X_test - 0.5))
 y_test = np.array(
-    [TestFunction(X_test[i, :].T) for i in range(M_test)], dtype=complex
+    [TestFunction(X_test[i, :].T) for i in range(M_test)]
 )  # the same for the test points
 
 ##########################
 ## Do the approximation ##
 ##########################
 
-ads = ANOVAapprox.approx(X, y, ds=ds, basis="per", N=bw)
+ads = ANOVAapprox.approx(X, y, ds=ds, basis="cheb", N=bw)
 ads.approximate(lam=lambdas, max_iter=max_iter, solver="lsqr")
 
 ################################
@@ -157,13 +156,11 @@ print(
 Umask = np.append(np.array([True]), gsis > 1e-2)
 U = [ads.U[i] for i in np.arange(0, len(Umask))[Umask]]  # get important subsets
 bws = M / (math.log10(M) * (len(U) - 1))  # calculate frequencies per subset
-N = [
-    math.floor(bws ** (1 / max(1, len(u))) / 2) * 2 for u in U
-]  # distribute the frequencies evenly and make them even
+N = [math.floor(bws ** (1 / max(1, len(u))) / 2) * 2 for u in U]  # distribute the frequencies evenly and make them even
 N[0] = 0
 
 a = ANOVAapprox.approx(
-    X, y, U, N, "per"
+    X, y, U, N, "cheb"
 )  # generate the data structure for the approximation
 a.approximate(
     lam=lambdas, max_iter=max_iter, solver="lsqr"
@@ -194,7 +191,7 @@ y_eval_anova_3 = y_eval_anova.T[pos]
 perm = np.argsort(X_test.T[3])
 X_plot = X_test.T[3][perm]
 y_eval_anova_3_plot = np.real(y_eval_anova_3[perm])
-y_anova_3_plot = -np.exp(np.sin(2 * np.pi * X_plot)) + 1.26607
+y_anova_3_plot = -np.exp(X_plot) + 1.2660446775548282
 
 plt.figure()
 plt.plot(X_plot, y_eval_anova_3_plot, label="approximation")

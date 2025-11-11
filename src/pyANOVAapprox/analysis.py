@@ -47,7 +47,7 @@ def _GSI(a, lam, Dict):  # helpfunction for get_GSI
 
     if Dict:
         if a.basis.startswith("chui"):
-            variances = np.square(a.fc[lam].norms(Dict=True, m=int(a.basis[-1])))
+            variances = a.fc[lam].norms(Dict=True, m=int(a.basis[-1]))
         else:
             variances = a.fc[lam].norms(Dict=True)
         return {u: (variances[u] ** 2) / variance_f for u in list(variances)}
@@ -129,7 +129,7 @@ def lam_ActiveSet(a, eps, lam):  # helpfunction for get_ActiveSet
             n += 1
 
     U_active = [None] * (n + 1)
-    U_active[0] = []
+    U_active[0] = ()
 
     idx = 1
     for i in range(len(gsi)):

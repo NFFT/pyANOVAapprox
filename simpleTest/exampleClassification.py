@@ -1,6 +1,6 @@
 # pip install pyANOVAapprox
 
-# Example for approximating an periodic function
+# Example for classification into two sets
 
 import math
 
@@ -9,26 +9,20 @@ import numpy as np
 
 import pyANOVAapprox as ANOVAapprox
 
-
 def TestFunction(x):
-    return (
-        np.sin(4 * np.pi * x[0] * x[4])
-        + 2
-        - np.exp(np.sin(2 * np.pi * x[3]))
-        + np.sin(4 * np.pi * x[5] * x[1]) ** 2
-    )
-
-
+    e = (abs(x[1]+1.0j*x[2])+(np.angle(x[1]+1.0j*x[2])/(math.pi*8))) % 0.25>0.125
+    return e*2-1
+    
 rng = np.random.default_rng(1234)
 
 ##################################
 ## Definition of the parameters ##
 ##################################
 
-d = 6  # dimension
+d = 3  # dimension
 
 M = 10000  # number of used evaluation points to train the model
-M_test = 100000  # number of used evaluation points to test the accuracity the model
+M_test = 10000  # number of used evaluation points to test the accuracity the model
 
 max_iter = 50  # maximum number of iterations
 
@@ -63,7 +57,7 @@ bw = [
 #      (10,10,),(10,10,),(10,10,),(10,10,),(10,10,),(10,10,),(10,10,),(10,10,),(10,10,),(10,10,),(10,10,),(10,10,),(10,10,),(10,10,),(10,10,)]
 # Use the subsets U with the bandwiths N. The bandwith N[i] corresponds to the subset U[i]. The bandwidth N[i][j] corresponds to the direction U[i][j]
 
-lambdas = np.array([0.0, 1.0])  # used regularisation parameters λ
+lambdas = np.array([0.0])  # used regularisation parameters λ
 
 ############################
 ## Generation of the data ##
@@ -71,39 +65,35 @@ lambdas = np.array([0.0, 1.0])  # used regularisation parameters λ
 
 X = rng.random((M, d)) - 0.5  # construct the evaluation points for training
 y = np.array(
-    [TestFunction(X[i, :].T) for i in range(M)], dtype=complex
+    [TestFunction(X[i, :].T) for i in range(M)], dtype=float
 )  # evaluate the function at these points
+X = X + 0.5
 X_test = rng.random((M_test, d)) - 0.5  #
 y_test = np.array(
-    [TestFunction(X_test[i, :].T) for i in range(M_test)], dtype=complex
+    [TestFunction(X_test[i, :].T) for i in range(M_test)], dtype=float
 )  # the same for the test points
+X_test = X_test + 0.5
 
-##########################
-## Do the approximation ##
-##########################
+###########################
+## Do the classification ##
+###########################
 
-ads = ANOVAapprox.approx(X, y, ds=ds, basis="per", N=bw)
-ads.approximate(lam=lambdas, max_iter=max_iter, solver="lsqr")
+ads = ANOVAapprox.approx(X, y, ds=ds, basis="cos", N=bw, classification=True)
+ads.approximate(max_iter=max_iter, lam=lambdas)
 
-################################
-## get approximation accuracy ##
-################################
+#################################
+## get classification accuracy ##
+#################################
 
-# mse = ANOVAapprox.get_mse(ads) # get mse error at the given training points
-mse = ANOVAapprox.get_mse(ads, X_test, y_test)  # get mse error at the test points
-λ_min = min(
-    mse, key=mse.get
-)  # get the regularisation parameter which leads to the minimal error
-mse_min = mse[λ_min]
-
-print("mse = " + str(mse_min))
+y_approx = ads.evaluate(X=X_test, lam=0.0) # evaluate the classification
+acc = sum(np.sign(y_approx) == y_test)/M_test # calculate the accuracity
+print("accuracity = " + str(acc))
 
 ###############################################
 ## Analyze the model to improve the accuracy ##
 ###############################################
 
-
-ar = ANOVAapprox.get_AttributeRanking(ads, λ_min)  # get the attrbute ranking
+ar = ANOVAapprox.get_AttributeRanking(ads, 0.0)  # get the attrbute ranking
 
 plt.figure()
 (markers, stemlines, baseline) = plt.stem(
@@ -124,7 +114,7 @@ plt.grid(True, which="both", ls="--", linewidth=0.5)
 plt.show()  # plot the arrtibute ranking in an logplot
 print("active dimensions: " + str(ar[ar > 1e-2]))
 
-gsis = ANOVAapprox.get_GSI(ads, λ_min)
+gsis = ANOVAapprox.get_GSI(ads, 0.0)
 label = list(ads.U[1:])
 l = len(label)
 plt.figure()
@@ -150,9 +140,9 @@ print(
     + str([label[i] for i in np.arange(0, l)[gsis > 1e-2]])
 )
 
-################################################
-## Approximation with better suited index set ##
-################################################
+#################################################
+## Classification with better suited index set ##
+#################################################
 
 Umask = np.append(np.array([True]), gsis > 1e-2)
 U = [ads.U[i] for i in np.arange(0, len(Umask))[Umask]]  # get important subsets
@@ -163,43 +153,33 @@ N = [
 N[0] = 0
 
 a = ANOVAapprox.approx(
-    X, y, U, N, "per"
-)  # generate the data structure for the approximation
+    X, y, U, N, "cos", classification=True
+)  # generate the data structure for the classification
 a.approximate(
-    lam=lambdas, max_iter=max_iter, solver="lsqr"
+    lam=lambdas,
+    max_iter=max_iter
 )  # do the approximation for all specified regularisation parameters
 
-mse = ANOVAapprox.get_mse(a, X_test, y_test)  # get mse error at the test points
-λ_min = min(
-    mse, key=mse.get
-)  # get the regularisation parameter which leads to the minimal error
-mse_min = mse[λ_min]
-print("mse = " + str(mse_min))
+y_approx = a.evaluate(X=X_test, lam=0.0) # evaluate the classification
+acc = sum(np.sign(y_approx) == y_test)/M_test # calculate the accuracity
+print("accuracity = " + str(acc))
 
 ########################
 ## Evaluate the model ##
 ########################
 
-# y_approx = a.evaluate(lam=λ_min) # evaluate the approximation at the training points for the regularisation λ_min
-# y_approx = a.evaluate(X=X_test, lam=λ_min) # evaluate the approximation at the points X_test for the regularisation λ_min
-
-# In the following we plot the real and the approximated anova term for the subset u=[3]
-
-y_eval_anova = a.evaluateANOVAterms(
-    X=X_test, lam=λ_min
-)  # evaluate all of the ANOVA terms
-pos = a.U.index((3,))  # find the index for the subset u=[3]
-y_eval_anova_3 = y_eval_anova.T[pos]
-
-perm = np.argsort(X_test.T[3])
-X_plot = X_test.T[3][perm]
-y_eval_anova_3_plot = np.real(y_eval_anova_3[perm])
-y_anova_3_plot = -np.exp(np.sin(2 * np.pi * X_plot)) + 1.26607
+#y_approx = a.evaluate(X=X_test) # evaluate the classification at the training points for the regularisation λ_min
+y_approx = a.evaluate(X=X_test, lam=0.0) # evaluate the classification at the points X_test for the regularisation λ_min
 
 plt.figure()
-plt.plot(X_plot, y_eval_anova_3_plot, label="approximation")
-plt.plot(X_plot, y_anova_3_plot, label="ANOVA term")  # ... "ANOVA term"]
-plt.title("Approximation of the ANOVA term 4")  # title = "..."
-plt.legend()  # Zeigt die Labels/Legende an
-plt.grid(True, linestyle="--", alpha=0.7)
+scatter = plt.scatter(
+    X_test[:,1],
+    X_test[:,2],
+    c=np.sign(y_approx), 
+    cmap='winter',      
+    s=100,               
+    alpha=0.8,          
+    edgecolors='black',  
+    linewidths=0.5     
+)
 plt.show()

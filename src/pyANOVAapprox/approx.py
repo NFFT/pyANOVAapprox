@@ -1,4 +1,4 @@
-from pyGroupedTransforms.GroupedTransform import *  # TODO: Kann wahrscheinlich weg sobald in pyGroupedTransform GreoupedTransform exportiert wird
+#from pyGroupedTransforms.GroupedTransform import *  # TODO: Kann wahrscheinlich weg sobald in pyGroupedTransform GreoupedTransform exportiert wird
 
 from pyANOVAapprox import *
 from pyANOVAapprox.fista import *
@@ -83,6 +83,7 @@ class approx:
         classification=False,
         basis_vect=[],
         fastmult=None,
+        parallel=True,
         ds=None,
     ):
 
@@ -185,6 +186,7 @@ class approx:
             N=N,
             X=Xt,
             fastmult=fastmult,
+            parallel=parallel,
             basis_vect=basis_vect,
         )
 
@@ -198,6 +200,7 @@ class approx:
         self.classification = classification
         self.basis_vect = basis_vect
         self.fastmult = fastmult
+        self.parallel = parallel
 
     def Approximate(
         self, lam, max_iter=50, weights=None, verbose=False, solver=None, tol=1e-8
@@ -240,6 +243,9 @@ class approx:
                 )
 
             def rmatv(f):
+                print(self.trafo.H)
+                print(f[:M])
+                print(len(f[:M]))
                 return (self.trafo.H @ f[:M]).vec() + (diag_w_sqrt * f[M:])
 
             F_vec = DeferredLinearOperator(
