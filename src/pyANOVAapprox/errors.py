@@ -155,19 +155,20 @@ def _acc(a, lam, X, y):  # helpfunction for get_acc
 
     return np.sum(np.sign(y_eval) == y) / len(y) * 100.0
 
+
 def auc_score(y_true, y_pred_proba):
     combined_data = sorted(zip(y_pred_proba, y_true), key=lambda x: x[0], reverse=True)
-    
+
     P = sum(y_true)
     N = len(y_true) - P
-    
+
     tp, fp = 0, 0
     tpr, fpr = 0, 0
     auc = 0.0
 
     for i in range(len(combined_data)):
         score, label = combined_data[i]
-        
+
         current_tp = 0
         current_fp = 0
         j = i
@@ -177,12 +178,12 @@ def auc_score(y_true, y_pred_proba):
             else:
                 current_fp += 1
             j += 1
-        
+
         i = j - 1
 
         tp += current_tp
         fp += current_fp
-        
+
         new_tpr = tp / P
         new_fpr = fp / N
 
@@ -190,6 +191,7 @@ def auc_score(y_true, y_pred_proba):
 
         tpr, fpr = new_tpr, new_fpr
     return auc
+
 
 def get_acc(a, X=None, y=None, lam=None):
 
@@ -216,9 +218,7 @@ def _auc(a, lam, X, y):
     return auc_score(y_int, y_sc)
 
 
-def get_auc(
-    a, X=None, y=None, lam=None
-):
+def get_auc(a, X=None, y=None, lam=None):
 
     if lam is not None:
         return _auc(a, lam, X, y)

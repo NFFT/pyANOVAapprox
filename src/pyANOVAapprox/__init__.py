@@ -9,6 +9,7 @@ from scipy.special import erf
 
 # from sklearn.metrics import roc_auc_score
 
+
 def bisection(l, r, fun, maxiter=1000):
     lval = fun(l)
     rval = fun(r)
