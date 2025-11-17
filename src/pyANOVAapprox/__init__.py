@@ -9,27 +9,6 @@ from scipy.special import erf
 
 # from sklearn.metrics import roc_auc_score
 
-
-def get_superposition_set(d, ds):  # TODO: Später funktion aut GT verwenden
-    """
-    get_superposition_set( d::Int, ds::Int )::Vector{Vector{Int}}
-
-    This function returns ``U^{(d,ds)} = \{  \pmb u \subset \{1,2,\dots,d\} : |\pmb u| \leq ds \}``.
-    """
-    nset = [[j] for j in range(d)]
-    returnset = [[]] + nset
-    for i in range(ds - 1):
-        nextnset = []
-        for s in nset:
-            for j in range(d):
-                if s[-1] < j:
-                    nextnset.append(s + [j])
-        returnset = returnset + nextnset
-        nset = nextnset
-
-    return [tuple(item) for item in returnset]
-
-
 def bisection(l, r, fun, maxiter=1000):
     lval = fun(l)
     rval = fun(r)

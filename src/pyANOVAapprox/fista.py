@@ -1,5 +1,3 @@
-# from pyGroupedTransforms.GroupedCoefficients import *  # TODO: Kann wahrscheinlich weg sobald in pyGroupedTransform GreoupedTransform exportiert wird
-
 from pyANOVAapprox import *
 
 
