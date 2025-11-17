@@ -155,6 +155,41 @@ def _acc(a, lam, X, y):  # helpfunction for get_acc
 
     return np.sum(np.sign(y_eval) == y) / len(y) * 100.0
 
+def auc_score(y_true, y_pred_proba):
+    combined_data = sorted(zip(y_pred_proba, y_true), key=lambda x: x[0], reverse=True)
+    
+    P = sum(y_true)
+    N = len(y_true) - P
+    
+    tp, fp = 0, 0
+    tpr, fpr = 0, 0
+    auc = 0.0
+
+    for i in range(len(combined_data)):
+        score, label = combined_data[i]
+        
+        current_tp = 0
+        current_fp = 0
+        j = i
+        while j < len(combined_data) and combined_data[j][0] == score:
+            if combined_data[j][1] == 1:
+                current_tp += 1
+            else:
+                current_fp += 1
+            j += 1
+        
+        i = j - 1
+
+        tp += current_tp
+        fp += current_fp
+        
+        new_tpr = tp / P
+        new_fpr = fp / N
+
+        auc += (new_fpr - fpr) * (tpr + new_tpr) * 0.5
+
+        tpr, fpr = new_tpr, new_fpr
+    return auc
 
 def get_acc(a, X=None, y=None, lam=None):
 
@@ -164,26 +199,26 @@ def get_acc(a, X=None, y=None, lam=None):
         return {l: _acc(a, l, X, y) for l in list(a.fc)}
 
 
-# def _auc(a, lam, X, y):  # helpfunction for get_auc    #TODO: implement ROC AUC Score
-#    if y is None:
-#        y = a.y
-#
-#    if X is not None:
-#        y_eval = a.evaluate(lam, X)
-#    else:
-#        y_eval = a.evaluate(lam)
-#
-#    y_sc = (y_eval - np.min(y_eval)) / (np.max(y_eval) - np.min(y_eval))
-#    y = np.where(y == -1.0, 0, y)
-#    y = np.where(y == 1.0, 1, y)
-#    y_int = y.astype(np.int64)
-#
-#    return roc_auc_score(y_int, y_sc)
+def _auc(a, lam, X, y):
+    if y is None:
+        y = a.y
+
+    if X is not None:
+        y_eval = a.evaluate(lam, X)
+    else:
+        y_eval = a.evaluate(lam)
+
+    y_sc = (y_eval - np.min(y_eval)) / (np.max(y_eval) - np.min(y_eval))
+    y = np.where(y == -1.0, 0, y)
+    y = np.where(y == 1.0, 1, y)
+    y_int = y.astype(np.int64)
+
+    return auc_score(y_int, y_sc)
 
 
 def get_auc(
     a, X=None, y=None, lam=None
-):  # gab einen Error in julia und in Python, als ich es mit komplexen werten getestet habe...
+):
 
     if lam is not None:
         return _auc(a, lam, X, y)
