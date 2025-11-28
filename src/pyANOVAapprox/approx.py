@@ -467,3 +467,22 @@ class approx:
                 results[l] = values
 
             return results
+    
+    def getfcu(self, u, lam):
+        idx = [self.trafo.settings[i].u for i in range(len(self.trafo.settings))].index(u)
+        bws = self.trafo.settings[idx].bandwidths
+
+        fcu = self.fc[lam][u].reshape(bws[::-1]-1)
+        fcu = np.permute_dims(fc, range(len(bws))[::-1])
+
+        return fc
+        
+    def getaxissum(self, u, j, lam):
+        fcu = getfcu(self, u, lam)
+        idx = findfirst(idx -> ghat.setting[idx].u == u, 1:length(ghat.setting))
+        bws = ghat.setting[idx].bandwidths
+
+        fcuj = np.sum(abs(fcu)**2, axis = tuple([i for i in range(len(u)) if i != j]))
+        fcuj = fcuj[np.mod(range(int(bws[j]/2),bws[j]),bws[j]-1)] + fcuj[range(int(bws[j]/2)-1,-1,-1)]
+
+        return fcuj

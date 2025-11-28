@@ -42,6 +42,7 @@ from .approx import *
 from .errors import *
 from .fista import *
 from .trafos import *
+from .bandwidth import *
 
 # Export functions and classes:
 __all__ = [
