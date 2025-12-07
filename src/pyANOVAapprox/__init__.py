@@ -6,6 +6,7 @@ import numpy as np
 from pyGroupedTransforms import *
 from scipy.sparse.linalg import lsqr
 from scipy.special import erf
+from scipy.optimize import bisect
 
 # from sklearn.metrics import roc_auc_score
 
@@ -68,4 +69,7 @@ __all__ = [
     "newton",
     "λ2ξ",
     "fista",
+    # from bandwidth.py:
+    "compute_bandwidth",
+    "estimate_rates",
 ]
