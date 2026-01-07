@@ -98,10 +98,10 @@ def estimate_rates(a, lam, verbose = False):
     us = [s.u for s in a.trafo.settings]
     nhat = GroupedCoefficients(a.trafo.settings, [1.0+0.0j]*len(a.fc[lam].data))
      
-    D = dict([(u,tuple([None]*len(u))) for u in us])
-    t = dict([(u,tuple([None]*len(u))) for u in us])
+    D = dict([(u,[None]*len(u)) for u in us])
+    t = dict([(u,[None]*len(u)) for u in us])
      
-    mcl = most_common_value(np.log(abs(ads.fc[0.0].data)))
+    mcl = np.exp(most_common_value(np.log(abs(a.fc[lam].data))))
     threshold = 100 * mcl ** 2
      
     if verbose:
@@ -114,7 +114,7 @@ def estimate_rates(a, lam, verbose = False):
         if verbose:
             pass #TODO:plot
         
-        for j in 1:len(u):
+        for j in range(len(u)):
             axissum = getaxissum(a.fc[lam], u, j)
             axissumnum = getaxissum(nhat, u, j)
             idx = next((i for i, v in enumerate((axissum > threshold*axissumnum)[::-1]) if v), None)
@@ -122,14 +122,14 @@ def estimate_rates(a, lam, verbose = False):
             if verbose:
                 pass #TODO:plot
                
-            if (idx is none) or idx >= len(axissum):
+            if (idx is None) or idx >= len(axissum):
                 D[u][j] = math.nan
                 t[u][j] = math.nan
             else:
                 idx = min(len(axissum), len(axissum)-idx+2)
-                a,b = fitrate_log(np.cumsum((axissum[0:idx])[::-1])[::-1])
-                D[u][j] = a
-                t[u][j] = -b/2
+                Duj,tuj = fitrate_log(np.cumsum((axissum[0:idx])[::-1])[::-1])
+                D[u][j] = Duj
+                t[u][j] = -tuj/2
     
                 if verbose:
                     pass #TODO:plot
