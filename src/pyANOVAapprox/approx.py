@@ -1,6 +1,9 @@
 from pyANOVAapprox import *
 from pyANOVAapprox.fista import *
-from pyANOVAapprox.bandwidth import *
+import pyANOVAapprox.bandwidth as ANOVAbandwidth
+import pyANOVAapprox.analysis as ANOVAanalysis
+import pyANOVAapprox.errors as ANOVAerrors
+import copy
 
 bases = ["per", "cos", "cheb", "std", "chui1", "chui2", "chui3", "chui4", "mixed"]
 types = {
@@ -50,6 +53,23 @@ def get_orderDependentBW(U, N):
             N_bw[i] = N[len(U[i]) - 1]
 
     return N_bw
+    
+    
+def transformX(X, basis):
+    Xt = X.copy()
+    if basis == "cos":
+        Xt /= 2
+    elif basis == "cheb":
+        Xt = np.arccos(Xt)
+        Xt /= 2 * np.pi
+    elif basis == "std":
+        Xt /= sqrt(2)
+        Xt = erf(Xt)
+        Xt += 1
+        Xt /= 4
+    return Xt
+    
+compute_bandwidth = ANOVAbandwidth.compute_bandwidth
 
 class approx_setting:
     def __init__(
@@ -74,7 +94,7 @@ class approx_setting:
         ):  # setting U   #approx(X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, ds::Int, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
             U = get_superposition_set(parent.X.shape[1], ds)
 
-        if N is not None and not isinstance(N[0], tuple) and ds is not None:  # setting N    #approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, U::Vector{Vector{Int}}, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
+        if N is not None and not isinstance(N[0], tuple):  # setting N    #approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, U::Vector{Vector{Int}}, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
             ds = max(len(u) for u in U)
 
             if len(N) != len(U) and len(N) != ds:
@@ -158,11 +178,12 @@ class approx:
         fastmult=None,
         parallel=True,
         ds=None,
+        lam={0.0},
     ):
         
         self.X = X
         
-        setting = approx_setting(parent = self,U=U,N=N,basis=basis,classification=classification,basis_vect=basis_vect,fastmult=fastmult,parallel=parallel,ds=ds)
+        setting = approx_setting(parent = self,U=U,N=N,basis=basis,classification=classification,basis_vect=basis_vect,fastmult=fastmult,parallel=parallel,ds=ds,lam=lam)
 
         min_X = np.min(X)
         max_X = np.max(X)
@@ -176,55 +197,59 @@ class approx:
         elif setting.basis == "cheb":
             if min_X < -1 or max_X > 1:
                 raise ValueError("Nodes need to be between -1 and 1.")
-
-        Xt = X.copy()
-
-        if setting.basis == "cos":
-            Xt /= 2
-        elif setting.basis == "cheb":
-            Xt = np.arccos(Xt)
-            Xt /= 2 * np.pi
-        elif setting.basis == "std":
-            Xt /= sqrt(2)
-            Xt = erf(Xt)
-            Xt += 1
-            Xt /= 4
-
-        if setting.N is not None:
-            trafo = GroupedTransform(
-                system=gt_systems[setting.basis],
-                U=setting.U,
-                N=setting.N,
-                X=Xt,
-                fastmult=setting.fastmult,
-                parallel=setting.parallel,
-                basis_vect=setting.basis_vect,
-            )
-        else:
-            trafo = None
-
         
         self.y = y
         self.setting = [setting]
-        self.trafo = [trafo]
+        self.trafo = [None]
         self.fc = [{}]
         self.aktsetting = 0
+        
+        if setting.N is not None:
+            self.addTrafo()
 
-    def Approximate(
-        self, settingnr = None, lam = None, max_iter=50, weights=None, verbose=False, solver=None, tol=1e-8
-    ):  # helpfuntion for approximate
+    def addSetting(self, setting):
+        settingnr = len(self.setting)
+        self.setting.append(copy.deepcopy(setting))
+        self.aktsetting = settingnr
+        self.trafo.append(None)
+        self.fc.append({})
+        
+    def getSettingNr(self, settingnr = None):
+        return self.aktsetting if settingnr is None else settingnr
+        
+    def getSetting(self, settingnr = None):
+        return self.setting[self.getSettingNr(settingnr)]
+        
+    def getTrafo(self, settingnr = None):
+        return self.trafo[self.getSettingNr(settingnr)]
+        
+    def getFc(self, settingnr = None):
+        return self.fc[self.getSettingNr(settingnr)]
+        
+    def addTrafo(self, settingnr = None):
+        setting = self.getSetting(settingnr)
         if settingnr is None:
             settingnr = self.aktsetting
-        if lam is None:
-            lam = self.setting[settingnr].lam
-        else:
-            self.setting[settingnr].lam = self.setting[settingnr].lam.add(lam)
+        #print(setting.U)
+        #print(setting.N)
+        self.trafo[settingnr] = GroupedTransform(
+            system=gt_systems[setting.basis],
+            U=setting.U,
+            N=setting.N,
+            X=transformX(self.X, setting.basis),
+            fastmult=setting.fastmult,
+            parallel=setting.parallel,
+            basis_vect=setting.basis_vect,
+        )
+    
+    def _approximate(self, lam, settingnr, max_iter, weights, verbose, solver, tol):  # helpfuntion for approximate
+        setting = self.getSetting(settingnr)
             
-        if self.setting[settingnr].N is None:
+        if setting.N is None:
             raise ValueError("N is not set. You may want to use autoapproximate")
             
         M = self.X.shape[0]
-        nf = get_NumFreq(self.trafo[settingnr].settings)
+        nf = get_NumFreq(self.getTrafo(settingnr).settings)
         w = np.ones(nf, "float")
 
         if weights is not None:
@@ -233,17 +258,17 @@ class approx:
             else:
                 w = weights
 
-        if self.setting[settingnr].basis in {"per", "mixed"}:
-            what = GroupedCoefficients(self.trafo[settingnr].settings, np.array(w, "complex"))
+        if setting.basis in {"per", "mixed"}:
+            what = GroupedCoefficients(self.getTrafo(settingnr).settings, np.array(w, "complex"))
         else:
-            what = GroupedCoefficients(self.trafo[settingnr].settings, w)
+            what = GroupedCoefficients(self.getTrafo(settingnr).settings, w)
 
-        tmp = np.zeros(nf, dtype=types[self.setting[settingnr].basis])
+        tmp = np.zeros(nf, dtype=types[setting.basis])
 
         if solver is None:
-            solver = "fista" if self.setting[settingnr].classification else "lsqr"
+            solver = "fista" if setting.classification else "lsqr"
 
-        if self.setting[settingnr].classification and solver != "fista":
+        if setting.classification and solver != "fista":
             raise ValueError(
                 "Classification is only implemented with the fista solver."
             )
@@ -254,135 +279,100 @@ class approx:
             def matv(fhat):
                 return np.concatenate(
                     (
-                        self.trafo[settingnr] @ GroupedCoefficients(self.trafo[settingnr].settings, fhat),
+                        self.getTrafo(settingnr) @ GroupedCoefficients(self.getTrafo(settingnr).settings, fhat),
                         diag_w_sqrt * fhat,
                     )
                 )
 
             def rmatv(f):
-                return (self.trafo[settingnr].H @ f[:M]).vec() + (diag_w_sqrt * f[M:])
+                return (self.getTrafo(settingnr).H @ f[:M]).vec() + (diag_w_sqrt * f[M:])
 
             F_vec = DeferredLinearOperator(
-                mfunc=matv, rmfunc=rmatv, shape=(M + nf, nf), dtype=types[self.setting[settingnr].basis]
+                mfunc=matv, rmfunc=rmatv, shape=(M + nf, nf), dtype=types[setting.basis]
             )
 
             tmp = lsqr(
                 F_vec,
-                np.concatenate((self.y, np.zeros(nf, dtype=types[self.setting[settingnr].basis]))),
+                np.concatenate((self.y, np.zeros(nf, dtype=types[setting.basis]))),
                 atol=tol,
                 btol=tol,
                 iter_lim=max_iter,
                 show=verbose,
             )
-            self.fc[settingnr][lam] = GroupedCoefficients(self.trafo[settingnr].settings, tmp[0])
+            self.getFc(settingnr)[lam] = GroupedCoefficients(self.getTrafo(settingnr).settings, tmp[0])
 
         elif solver == "fista":
-            ghat = GroupedCoefficients(self.trafo[settingnr].settings, tmp)
+            ghat = GroupedCoefficients(self.getTrafo(settingnr).settings, tmp)
             fista(
                 ghat,
-                self.trafo[settingnr],
+                self.getTrafo(settingnr),
                 self.y,
                 lam,
                 what,
                 max_iter=max_iter,
-                classification=self.classification,
+                classification=setting.classification,
             )
-            self.fc[settingnr][lam] = ghat
+            self.getFc(settingnr)[lam] = ghat
         else:
             raise ValueError("Solver not found.")
 
     def approximate(
-        self, lam=None, max_iter=50, weights=None, verbose=False, solver=None, tol=1e-8
+        self, lam=None, settingnr = None, max_iter=50, weights=None, verbose=False, solver=None, tol=1e-8
     ):
         """
         If lam is a np.ndarray of dtype float, this function computes the approximation for the regularization parameters contained in lam.
         If lam is a float, this function computes the approximation for the regularization parameter lam.
         """
-        #if (
-        #    isinstance(lam, np.ndarray) and lam.dtype == float
-        #):  # approximate( a::approx; lambda::Vector{Float64} = exp.(range(0, 5, length = 5)), max_iter::Int = 50, weights::Union{Vector{Float64},Nothing} = nothing, verbose::Bool = false, solver::String = "lsqr" )::Nothing
-        #    lam = np.sort(lam)[::-1]
-        #    for l in lam:
-        #        self.Approximate(
-        #            l,
-        #            max_iter=max_iter,
-        #            weights=weights,
-        #            verbose=verbose,
-        #            solver=solver,
-        #            tol=tol,
-        #        )
-
-        #elif isinstance(
-        #    lam, float
-        #):  # approximate( a::approx, λ::Float64; max_iter::Int = 50, weights::Union{Vector{Float64},Nothing} = nothing, verbose::Bool = false, solver::String = "lsqr", tol:.Float64b= 1e-8 )::Nothing
-        self.Approximate(
-            lam = lam,
-            max_iter=max_iter,
-            weights=weights,
-            verbose=verbose,
-            solver=solver,
-            tol=tol,
-        )
-
-        #else:
-        #    raise ValueError(
-        #        lam, "has to be a float or a numpy array with float as dtype"
-        #    )
-
-    def autoapproximate(self, settingnr = None, B = None, maxiter = 5, lmbda = 0.0, solver="lsqr", verbose=False):
+        setting = self.getSetting(settingnr)
+        
+        if lam is None:
+            lam = setting.lam
+        else:
+            if isinstance(lam, np.ndarray):
+                lam = {float(l) for l in lam}
+            if not isinstance(lam, set):
+                lam = {lam}
+            setting.lam = lam
+        
+        for l in lam:
+            self._approximate(
+                l,
+                settingnr=settingnr,
+                max_iter=max_iter,
+                weights=weights,
+                verbose=verbose,
+                solver=solver,
+                tol=tol,
+            )
     
-        if settingnr is None:
-            settingnr = self.aktsetting
+    estimate_rates = ANOVAbandwidth.estimate_rates
+            
+    def _autoapproximate(self, lam, settingnr, B, maxiter, solver, verbose, solver_max_iter, solver_weights, solver_verbose, solver_tol):
+        setting = self.getSetting(settingnr)
         
         n = len(self.y)
         
         B = bisect(lambda x: x*math.log(x)-n, 1, n)
 
-        D = dict([(u,tuple([1.0]*len(u))) for u in self.setting[settingnr].U])
-        t = dict([(u,tuple([1.0]*len(u))) for u in self.setting[settingnr].U])
+        D = dict([(u,tuple([1.0]*len(u))) for u in setting.U])
+        t = dict([(u,tuple([1.0]*len(u))) for u in setting.U])
 
         for idx in range(maxiter):
             bw = compute_bandwidth(B, D, t)
-            print(self.setting[settingnr].lam)
-            if self.setting[settingnr].N is not None:
-                oldSettingNr = settingnr
-                settingnr = len(self.setting)
-                self.setting.append(self.setting[oldSettingNr])
-                self.aktsetting = settingnr
-                self.trafo.append(None)
-                self.fc.append({})
-            
-            self.setting[settingnr].N = [bw[i] for i in  self.setting[settingnr].U]
-            
-            Xt = self.X.copy()
-            if self.setting[settingnr].basis == "cos":
-                Xt /= 2
-            elif self.setting[settingnr].basis == "cheb":
-                Xt = np.arccos(Xt)
-                Xt /= 2 * np.pi
-            elif self.setting[settingnr].basis == "std":
-                Xt /= sqrt(2)
-                Xt = erf(Xt)
-                Xt += 1
-                Xt /= 4
+            #print(self.setting[settingnr].lam)
+            if setting.N is not None:
+                self.addSetting(setting)
+                settingnr = self.aktsetting
+                setting = self.getSetting(settingnr)
                 
-            self.trafo[settingnr] = GroupedTransform(
-                system=gt_systems[self.setting[settingnr].basis],
-                U=self.setting[settingnr].U,
-                N=self.setting[settingnr].N,
-                X=Xt,
-                fastmult=self.setting[settingnr].fastmult,
-                parallel=self.setting[settingnr].parallel,
-                basis_vect=self.setting[settingnr].basis_vect,
-            )
-            
-            
+            setting.N = [bw[i] for i in setting.U]
+                
+            self.addTrafo()
             
             #open("../dat/s" * string(setting) * "_rates_bw_it" * string(idx) * ".dat", "w") do io
             #    write(io, string(bw))
             #end
-            print(self.setting[settingnr].lam)
-            self.approximate(lam=0.0,solver=solver)
+            self.approximate(lam=lam,solver=solver,max_iter=solver_max_iter, weights=solver_weights, verbose=solver_verbose, tol=solver_tol)
 
             #L_test = GroupedTransform("exp", us, [ bw[u] for u in us ], hcat(X_test...) .- .5)
             #L2error = norm(L_test*ghat - y_test)/sqrt(n_test)
@@ -393,9 +383,48 @@ class approx:
             #end
 
 
-            D, t = estimate_rates(self, lmbda, verbose = verbose)
+            D, t = estimate_rates(self, lam, verbose = verbose)
+            #print(D)
+            #print(t)
             #savefig("../dat/s" * string(setting) * "_rates_it" * string(idx) * ".png")
         return D, t
+        
+    def autoapproximate(self, lam = None, settingnr = None, B = None, maxiter = 2, solver="lsqr", verbose=False, solver_max_iter=50, solver_weights=None, solver_verbose=False, solver_tol=1e-8):
+        setting = self.getSetting(settingnr)
+        
+        if lam is None:
+            lam = setting.lam
+        else:
+            if not isinstance(lam, set):
+                lam = {lam}
+            setting.lam = lam
+        
+        if len(lam) == 1:
+            return self._autoapproximate(
+                    lam.pop(),
+                    settingnr = settingnr, 
+                    B = B, 
+                    maxiter = maxiter, 
+                    solver=solver, 
+                    verbose=verbose,
+                    solver_max_iter=solver_max_iter, 
+                    solver_weights=solver_weights, 
+                    solver_verbose=solver_verbose, 
+                    solver_tol=solver_tol
+                )
+        else:
+            return {l: self._autoapproximate(
+                    l,
+                    settingnr = settingnr, 
+                    B = B, 
+                    maxiter = maxiter, 
+                    solver=solver, 
+                    verbose=verbose,
+                    solver_max_iter=solver_max_iter, 
+                    solver_weights=solver_weights, 
+                    solver_verbose=solver_verbose, 
+                    solver_tol=solver_tol
+                ) for l in lam}
 
     def evaluate(self, settingnr = None, lam=None, X=None):
         """
@@ -406,121 +435,97 @@ class approx:
         - If only lam is given: evaluate at self.X for specific lam.
         - If neither are given: evaluate at self.X for all lam.
         """
-        if settingnr is None:
-            settingnr = self.aktsetting
+        setting = self.getSetting(settingnr)
+            
         if X is not None:
-            if self.setting[settingnr].basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
+            if setting.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
                 raise ValueError("Nodes need to be between -0.5 and 0.5.")
-            elif self.setting[settingnr].basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
+            elif setting.basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
                 raise ValueError("Nodes need to be between 0 and 1.")
-            elif self.setting[settingnr].basis == "cheb" and (np.min(X) < -1 or np.max(X) > 1):
+            elif setting.basis == "cheb" and (np.min(X) < -1 or np.max(X) > 1):
                 raise ValueError("Nodes need to be between -1 and 1.")
 
-            Xt = np.copy(X)
-
-            if self.setting[settingnr].basis == "cos":
-                Xt /= 2
-            elif self.setting[settingnr].basis == "cheb":
-                Xt = np.arccos(Xt)
-                Xt /= 2 * np.pi
-            elif self.setting[settingnr].basis == "std":
-                Xt /= np.sqrt(2)
-                Xt = erf(Xt)
-                Xt += 1
-                Xt /= 4
-
             trafo = GroupedTransform(
-                system=gt_systems[self.setting[settingnr].basis],
-                U=self.setting[settingnr].U,
-                N=self.setting[settingnr].N,
-                X=Xt,
-                basis_vect=self.setting[settingnr].basis_vect,
+                system=gt_systems[setting.basis],
+                U=setting.U,
+                N=setting.N,
+                X=transformX(self.X, setting.basis),
+                basis_vect=setting.basis_vect,
             )
-
-            if (
-                lam is not None
-            ):  # evaluate( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Vector{ComplexF64},Vector{Float64}}
-                return trafo @ self.fc[settingnr][lam]
-            else:  # evaluate( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Vector{ComplexF64},Vector{Float64}}}
-                return {λ: trafo @ self.fc[settingnr][λ] for λ in list(self.fc[settingnr])}
-
         else:
-            if (
-                lam is not None
-            ):  # evaluate( a::approx; λ::Float64 )::Union{Vector{ComplexF64},Vector{Float64}}
-                return self.trafo[settingnr] @ self.fc[settingnr][lam]
-            else:  # evaluate( a::approx )::Dict{Float64,Union{Vector{ComplexF64},Vector{Float64}}}
-                return {λ: self.trafo[settingnr] @ self.fc[settingnr][λ] for λ in list(self.fc[settingnr])}
+            trafo = self.getTrafo(settingnr)
 
-    def evaluateANOVAterms(self, X, lam=None):
+        if (
+            lam is not None
+        ):  # evaluate( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Vector{ComplexF64},Vector{Float64}}
+            return trafo @ self.getFc(settingnr)[lam]
+        else:  # evaluate( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Vector{ComplexF64},Vector{Float64}}}
+            return {λ: trafo @ self.getFc(settingnr)[λ] for λ in setting.lam}
+
+    def evaluateANOVAterms(self, settingnr = None, X=None, lam=None):
         """
         This function evaluates the single ANOVA terms of the approximation on the nodes of matrix X and regularization lam.
 
         - If lam is given: evaluate at X for specific lam.
         - If lam is not given: evaluate at X for all lam.
         """
-
-        if self.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
+        setting = self.getSetting(settingnr)
+        if X is None:
+            X=self.X
+            
+        if setting.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
             raise ValueError("Nodes need to be between -0.5 and 0.5.")
-        elif self.basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
+        elif setting.basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
             raise ValueError("Nodes need to be between 0 and 1.")
-        elif self.basis == "cheb" and (np.min(X) < -1 or np.max(X) > 1):
+        elif setting.basis == "cheb" and (np.min(X) < -1 or np.max(X) > 1):
             raise ValueError("Nodes need to be between -1 and 1.")
 
-        Xt = np.copy(X)
+        Xt = transformX(self.X, setting.basis)
 
-        if self.basis == "cos":
-            Xt /= 2
-        elif self.basis == "cheb":
-            Xt = np.arccos(Xt)
-            Xt /= 2 * pi
-        elif self.basis == "std":
-            Xt /= sqrt(2)
-            Xt = erf(Xt)
-            Xt += 1
-            Xt /= 4
-
-        if self.basis == "per":
-            values = np.zeros((Xt.shape[0], len(self.U)), "complex")
+        if self.setting[settingnr].basis == "per":
+            values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "complex")
         else:
-            values = np.zeros((Xt.shape[0], len(self.U)), "float")
+            values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "float")
 
         trafo = GroupedTransform(
-            system=gt_systems[self.basis],
-            U=self.U,
-            N=self.N,
+            system=gt_systems[setting.basis],
+            U=setting.U,
+            N=setting.N,
             X=Xt,
-            basis_vect=self.basis_vect,
+            basis_vect=setting.basis_vect,
         )
 
         if (
             lam is not None
         ):  # evaluateANOVAterms( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Matrix{ComplexF64},Matrix{Float64}}
-            for j, u in enumerate(self.U):
-                values[:, j] = trafo[u] @ self.fc[lam][u]
+            for j, u in enumerate(setting.U):
+                values[:, j] = trafo[u] @ self.getFc(settingnr)[lam][u]
             return values
         else:  # evaluateANOVAterms( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Matrix{ComplexF64},Matrix{Float64}}}
             results = {}
-            for λ in list(self.fc):
+            for λ in setting.lam:
                 vals = np.zeros_like(values)
-                for j, u in enumerate(self.U):
-                    vals[:, j] = trafo[u] @ self.fc[λ][u]
+                for j, u in enumerate(setting.U):
+                    vals[:, j] = trafo[u] @ self.getFc(settingnr)[λ][u]
                 results[λ] = vals
             return results
 
-    def evaluateSHAPterms(self, X, lam=None):
+    def evaluateSHAPterms(self, settingnr = None, X=None, lam=None):
         """
         This function evaluates for each dimension the Shapley contribution to the overall approximation on the nodes of matrix X and regularization lam.
 
         - If lam is given: evaluate at X for specific lam.
         - If lam is not given: evaluate at X for all lam.
         """
-
-        if self.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
+        setting = self.getSetting(settingnr)
+            
+        if X is None:
+            X=self.X
+        if setting.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
             raise ValueError("Nodes need to be between -0.5 and 0.5.")
-        elif self.basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
+        elif setting.basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
             raise ValueError("Nodes need to be between 0 and 1.")
-        elif self.basis == "cheb" and (np.min(X) < -1 or np.max(X) > 1):
+        elif setting.basis == "cheb" and (np.min(X) < -1 or np.max(X) > 1):
             raise ValueError("Nodes need to be between -1 and 1.")
 
         d = X.shape[1]
@@ -531,27 +536,51 @@ class approx:
         ):  # evaluateSHAPterms( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Matrix{ComplexF64},Matrix{Float64}}
             terms = self.evaluateANOVAterms(X, lam)
 
-            Dtype = np.complex128 if self.basis == "per" else np.float64
+            Dtype = np.complex128 if setting.basis == "per" else np.float64
             values = np.zeros((M, d), dtype=Dtype)
 
             for i in range(d):
-                for j, u in enumerate(self.U):
+                for j, u in enumerate(setting.U):
                     if i in u:
                         values[:, i] += terms[:, j] / len(u)
             return values
 
         else:  # evaluateSHAPterms( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Matrix{ComplexF64},Matrix{Float64}}}
             results = {}
-            for l in list(self.fc):
+            for l in setting.lam:
                 terms = self.evaluateANOVAterms(X, l)
 
-                Dtype = np.complex128 if self.basis == "per" else np.float64
+                Dtype = np.complex128 if setting.basis == "per" else np.float64
                 values = np.zeros((M, d), dtype=Dtype)
 
                 for i in range(d):
-                    for j, u in enumerate(self.U):
+                    for j, u in enumerate(setting.U):
                         if i in u:
                             values[:, i] += terms[:, j] / len(u)
                 results[l] = values
 
             return results
+    
+    _l2_error = ANOVAerrors._l2_error
+    get_l2_error = ANOVAerrors.get_l2_error
+    _mse = ANOVAerrors._mse
+    get_mse = ANOVAerrors.get_mse
+    _mad = ANOVAerrors._mad
+    get_mad = ANOVAerrors.get_mad
+    _L2_error = ANOVAerrors._L2_error
+    get_L2_error = ANOVAerrors.get_L2_error
+    _acc = ANOVAerrors._acc
+    get_acc = ANOVAerrors.get_acc
+    _auc = ANOVAerrors._auc
+    get_auc = ANOVAerrors.get_auc
+    
+    _variances = ANOVAanalysis._variances
+    get_variances = ANOVAanalysis.get_variances
+    _GSI = ANOVAanalysis._GSI
+    get_GSI = ANOVAanalysis.get_GSI
+    _AttributeRanking = ANOVAanalysis._AttributeRanking
+    get_AttributeRanking = ANOVAanalysis.get_AttributeRanking
+    _ActiveSet = ANOVAanalysis._ActiveSet
+    get_ActiveSet = ANOVAanalysis.get_ActiveSet
+    _ShapleyValues = ANOVAanalysis._ShapleyValues
+    get_ShapleyValues = ANOVAanalysis.get_ShapleyValues

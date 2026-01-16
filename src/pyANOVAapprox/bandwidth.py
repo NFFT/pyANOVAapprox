@@ -94,14 +94,14 @@ def most_common_value(data):
     max_index = max(range(n_points), key=lambda i: df[i])
     return t[max_index]
     
-def estimate_rates(a, lam, verbose = False):
-    us = [s.u for s in a.trafo[a.aktsetting].settings]
-    nhat = GroupedCoefficients(a.trafo[a.aktsetting].settings, [1.0+0.0j]*len(a.fc[a.aktsetting][lam].data))
+def estimate_rates(self, lam, settingnr = None, verbose = False):
+    us = [s.u for s in self.getTrafo(settingnr).settings]
+    nhat = GroupedCoefficients(self.getTrafo(settingnr).settings, [1.0+0.0j]*len(self.getFc(settingnr)[lam].data))
      
     D = dict([(u,[None]*len(u)) for u in us])
     t = dict([(u,[None]*len(u)) for u in us])
      
-    mcl = np.exp(most_common_value(np.log(abs(a.fc[a.aktsetting][lam].data))))
+    mcl = np.exp(most_common_value(np.log(abs(self.getFc(settingnr)[lam].data))))
     threshold = 100 * mcl ** 2
      
     if verbose:
@@ -115,7 +115,7 @@ def estimate_rates(a, lam, verbose = False):
             pass #TODO:plot
         
         for j in range(len(u)):
-            axissum = getaxissum(a.fc[a.aktsetting][lam], u, j)
+            axissum = getaxissum(self.getFc(settingnr)[lam], u, j)
             axissumnum = getaxissum(nhat, u, j)
             idx = next((i for i, v in enumerate((axissum > threshold*axissumnum)[::-1]) if v), None)
             
