@@ -209,7 +209,7 @@ class approx:
 
     def addSetting(self, setting):
         settingnr = len(self.setting)
-        self.setting.append(copy.deepcopy(setting))
+        self.setting.append(copy.copy(setting))
         self.aktsetting = settingnr
         self.trafo.append(None)
         self.fc.append({})
@@ -383,7 +383,7 @@ class approx:
             #end
 
 
-            D, t = estimate_rates(self, lam, verbose = verbose)
+            D, t = self.estimate_rates(lam = lam, verbose = verbose)
             #print(D)
             #print(t)
             #savefig("../dat/s" * string(setting) * "_rates_it" * string(idx) * ".png")
@@ -449,7 +449,7 @@ class approx:
                 system=gt_systems[setting.basis],
                 U=setting.U,
                 N=setting.N,
-                X=transformX(self.X, setting.basis),
+                X=transformX(X, setting.basis),
                 basis_vect=setting.basis_vect,
             )
         else:
@@ -480,7 +480,7 @@ class approx:
         elif setting.basis == "cheb" and (np.min(X) < -1 or np.max(X) > 1):
             raise ValueError("Nodes need to be between -1 and 1.")
 
-        Xt = transformX(self.X, setting.basis)
+        Xt = transformX(X, setting.basis)
 
         if self.setting[settingnr].basis == "per":
             values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "complex")
