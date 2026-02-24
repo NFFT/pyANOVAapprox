@@ -30,19 +30,19 @@ y_test = np.array([f(X_test[i, :].T) for i in range(M)], dtype=complex)
 
 ads = ANOVAapprox.approx(X, y, ds=ds, basis="per", N=bw)
 ads.approximate(lam=lambdas, solver="fista")
-ANOVAapprox.get_ActiveSet(ads, [0.05, 0.05])
+ads.get_ActiveSet([0.05, 0.05])
 bw = ANOVAapprox.get_orderDependentBW(AS, [128, 32])
 
 aU = ANOVAapprox.approx(X, y, U=AS, N=bw, basis="per")
 aU.approximate(lam=lambdas, solver="fista")
 
 
-err_L2_ds = ANOVAapprox.get_L2_error(ads, norm(), fc)[0.0]
-err_L2_U = ANOVAapprox.get_L2_error(ads, norm(), fc)[0.0]
-err_l2_ds = ANOVAapprox.get_l2_error(ads)[0.0]
-err_l2_U = ANOVAapprox.get_l2_error(aU)[0.0]
-err_l2_rand_ds = ANOVAapprox.get_l2_error(ads, X_test, y_test)[0.0]
-err_l2_rand_U = ANOVAapprox.get_l2_error(aU, X_test, y_test)[0.0]
+err_L2_ds = ads.get_L2_error(norm(), fc)[0.0]
+err_L2_U = aU.get_L2_error(norm(), fc)[0.0]
+err_l2_ds = ads.get_l2_error()[0.0]
+err_l2_U = aU.get_l2_error()[0.0]
+err_l2_rand_ds = ads.get_l2_error(X=X_test, y=y_test)[0.0]
+err_l2_rand_U = aU.get_l2_error(X=X_test, y=y_test)[0.0]
 
 
 print("== PERIODIC FISTA ==")

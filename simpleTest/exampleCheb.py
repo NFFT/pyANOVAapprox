@@ -103,7 +103,7 @@ print("mse = " + str(mse_min))
 ar = ANOVAapprox.get_AttributeRanking(ads, λ_min)  # get the attrbute ranking
 
 plt.figure()
-(markers, stemlines, baseline) = plt.stem(
+markers, stemlines, baseline = plt.stem(
     np.arange(1, d + 1),  # x-Werte (1:d)
     ar,  # y-Werte (ar)
     linefmt="C0-",  # Stil der Stiele
@@ -126,7 +126,7 @@ label = list(ads.U[1:])
 l = len(label)
 plt.figure()
 x_values = np.arange(1, l + 1)
-(markers, stemlines, baseline) = plt.stem(
+markers, stemlines, baseline = plt.stem(
     x_values,  # X-Werte: 1 bis l
     gsis,  # Y-Werte: gsis
     linefmt="C0-",  # Stil der Stiele

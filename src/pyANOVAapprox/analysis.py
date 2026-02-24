@@ -1,62 +1,74 @@
-from pyANOVAapprox import *
+# from pyANOVAapprox import *
+import numpy as np
 
 
-def get_variance(a, lam, Dict):  # helpfunction for get_variances
-
-    if a.basis.startswith("chui"):
-        variances = a.fc[lam].norms(Dict=False, m=int(a.basis[-1]))
+def _variances(self, settingnr, lam, Dict):  # helpfunction for get_variances
+    setting = self.getSetting(settingnr)
+    if setting.basis.startswith("chui"):
+        variances = self.getFc(settingnr)[lam].norms(
+            Dict=False, m=int(setting.basis[-1])
+        )
     else:
-        variances = a.fc[lam].norms()
+        variances = self.getFc(settingnr)[lam].norms()
 
     variances = variances[1:]
     if Dict:
         if a.basis.startswith("chui"):
-            variances = a.fc[lam].norms(Dict=True, m=int(a.basis[-1]))
+            variances = self.getFc(settingnr)[lam].norms(
+                Dict=True, m=int(setting.basis[-1])
+            )
         else:
-            variances = a.fc[lam].norms(Dict=True)
+            variances = self.getFc(settingnr)[lam].norms(Dict=True)
 
         return {u: variances[u] for u in list(variances)}
     else:
         return variances
 
 
-def get_variances(a, lam=None, Dict=False):
+def get_variances(self, settingnr=None, lam=None, Dict=False):
     """
     This function returns the variances of the approximated ANOVA terms for all ``\lambda``, if lam == None. Otherwise for the provided lam. Depending on Dict, it returns the approximated ANOVA terms as a vector or as a dict.
     """
     if isinstance(lam, float):
-        return get_variance(
-            a=a, lam=lam, Dict=Dict
+        return self._variances(
+            settingnr, lam, Dict
         )  # get_variances(a::approx, λ::Float64; dict::Bool=false,)::Union{Vector{Float64},Dict{Vector{Int},Float64}}
 
     elif (
         lam == None
     ):  # get_variances( a::approx; dict::Bool = false )::Dict{Float64,Union{Vector{Float64},Dict{Vector{Int},Float64}}}
-        return {l: get_variance(a=a, lam=l, Dict=Dict) for l in list(a.fc)}
+        return {
+            l: self._variances(settingnr, l, Dict)
+            for l in self.getSetting(settingnr).lam
+        }
 
 
-def _GSI(a, lam, Dict):  # helpfunction for get_GSI
-
-    if a.basis.startswith("chui"):
-        variances = np.square(a.fc[lam].norms(Dict=False, m=int(a.basis[-1])))
+def _GSI(self, settingnr, lam, Dict):  # helpfunction for get_GSI
+    setting = self.getSetting(settingnr)
+    if setting.basis.startswith("chui"):
+        variances = np.square(
+            self.getFc(settingnr)[lam].norms(Dict=False, m=int(setting.basis[-1]))
+        )
     else:
-        variances = np.square(a.fc[lam].norms())
+        variances = np.square(self.getFc(settingnr)[lam].norms())
 
     variances = variances[1:]
     variance_f = sum(variances)
 
     if Dict:
-        if a.basis.startswith("chui"):
-            variances = a.fc[lam].norms(Dict=True, m=int(a.basis[-1]))
+        if setting.basis.startswith("chui"):
+            variances = self.getFc(settingnr)[lam].norms(
+                Dict=True, m=int(setting.basis[-1])
+            )
         else:
-            variances = a.fc[lam].norms(Dict=True)
+            variances = self.getFc(settingnr)[lam].norms(Dict=True)
         return {u: (variances[u] ** 2) / variance_f for u in list(variances)}
 
     else:
         return variances / variance_f
 
 
-def get_GSI(a, lam=None, Dict=False):
+def get_GSI(self, settingnr=None, lam=None, Dict=False):
     """
     This function returns the global sensitivity indices of the approximation for all ``\lambda``, if lam == None. Otherwise for the provided lam. Depending on Dict, it returns the approximated ANOVA terms as a vector or as a dict.
     """
@@ -64,15 +76,17 @@ def get_GSI(a, lam=None, Dict=False):
     if (
         lam is not None
     ):  # get_GSI(a::approx, λ::Float64; dict::Bool = false,)::Union{Vector{Float64},Dict{Vector{Int},Float64}}
-        return _GSI(a=a, lam=lam, Dict=Dict)
+        return self._GSI(settingnr, lam, Dict)
     else:  # get_GSI( a::approx; dict::Bool = false )::Dict{Float64,Union{Vector{Float64},Dict{Vector{Int},Float64}}}
-        return {l: _GSI(a, l, Dict) for l in list(a.fc)}
+        return {
+            l: self._GSI(settingnr, l, Dict) for l in self.getSetting(settingnr).lam
+        }
 
 
-def lam_AttributeRanking(a, lam):  # helpfunction foor get_AttributeRanking
+def _AttributeRanking(self, settingnr, lam):  # helpfunction for get_AttributeRanking
 
-    d = a.X.shape[1]
-    gsis = get_GSI(a, lam, Dict=True)
+    d = self.X.shape[1]
+    gsis = self.get_GSI(settingnr, lam, Dict=True)
     U = list(gsis)
     lengths = [len(u) for u in U]
     ds = max(lengths)
@@ -99,28 +113,31 @@ def lam_AttributeRanking(a, lam):  # helpfunction foor get_AttributeRanking
     return r / nf
 
 
-def get_AttributeRanking(a, lam=None):
+def get_AttributeRanking(self, settingnr=None, lam=None):
     """
     This function returns the attribute ranking of the approximation for all reg. parameters ``\lambda``, if lam == None, as a dictionary of vectors of length `a.d`. Otherwise for the provided lam as a vector of length `a.d`.
     """
     if (
-        lam == None
+        lam is None
     ):  # get_AttributeRanking( a::approx, λ::Float64 )::Dict{Float64,Vector{Float64}}
-        return {l: get_AttributeRanking(a, l) for l in list(a.fc)}
+        return {
+            l: self._AttributeRanking(settingnr, l)
+            for l in self.getSetting(settingnr).lam
+        }
     else:  # get_AttributeRanking( a::approx, λ::Float64 )::Vector{Float64}
-        return lam_AttributeRanking(a=a, lam=lam)
+        return self._AttributeRanking(settingnr, lam)
 
 
-def lam_ActiveSet(a, eps, lam):  # helpfunction for get_ActiveSet
+def _ActiveSet(self, eps, settingnr, lam):  # helpfunction for get_ActiveSet
 
-    U = a.U[1:]
+    U = self.getSetting(settingnr).U[1:]
     lengths = [len(u) for u in U]
     ds = max(lengths)
 
     if len(eps) != ds:
         raise ValueError("Entries in vector eps have to be ds.")
 
-    gsi = get_GSI(a, lam)
+    gsi = self.get_GSI(settingnr, lam)
 
     n = 0
 
@@ -140,20 +157,23 @@ def lam_ActiveSet(a, eps, lam):  # helpfunction for get_ActiveSet
     return U_active
 
 
-def get_ActiveSet(a, eps, lam=None):
+def get_ActiveSet(self, eps, settingnr=None, lam=None):
 
     if (
-        lam == None
+        lam is None
     ):  # get_ActiveSet(a::approx, eps::Vector{Float64})::Dict{Float64,Vector{Vector{Int}}}
-        return {l: lam_ActiveSet(a=a, eps=eps, lam=l) for l in list(a.fc)}
+        return {
+            l: self._ActiveSet(eps, settingnr, l)
+            for l in self.getSetting(settingnr).lam
+        }
     else:  # get_ActiveSet(a::approx, eps::Vector{Float64}, λ::Float64)::Vector{Vector{Int}}
-        return lam_ActiveSet(a=a, eps=eps, lam=lam)
+        return self._ActiveSet(eps, settingnr, lam)
 
 
-def lam_ShapleyValues(a, lam):  # helpfunction for get_ShapleyValues
+def _ShapleyValues(self, settingnr, lam):  # helpfunction for get_ShapleyValues
 
-    d = a.X.shape[1]
-    vars_dict = get_variances(a, lam, Dict=True)
+    d = self.X.shape[1]
+    vars_dict = get_variances(self, settingnr, lam, Dict=True)
     U = list(vars_dict)
     r = np.zeros(d)
 
@@ -165,11 +185,27 @@ def lam_ShapleyValues(a, lam):  # helpfunction for get_ShapleyValues
     return r
 
 
-def get_ShapleyValues(a, lam=None):
+def get_ShapleyValues(self, settingnr=None, lam=None):
     """
     This function returns the Shapley values of the approximation for all reg. parameters ``\lambda``, if lam == None, as a dictionary of vectors of length `a.d`. Otherwise for the provided lam as a vector of length `a.d`.
     """
-    if lam == None:  # get_ShapleyValues(a::approx)::Dict{Float64,Vector{Float64}}
-        return {l: lam_ShapleyValues(a=a, lam=l) for l in list(a.fc)}
+    if lam is None:  # get_ShapleyValues(a::approx)::Dict{Float64,Vector{Float64}}
+        return {
+            l: self._ShapleyValues(settingnr, l) for l in self.getSetting(settingnr).lam
+        }
     else:  # get_ShapleyValues(a::approx, λ::Float64)::Vector{Float64}
-        return lam_ShapleyValues(a=a, lam=lam)
+        return self._ShapleyValues(settingnr, lam)
+
+
+_all = [
+    "_variances",
+    "get_variances",
+    "_GSI",
+    "get_GSI",
+    "_AttributeRanking",
+    "get_AttributeRanking",
+    "_ActiveSet",
+    "get_ActiveSet",
+    "_ShapleyValues",
+    "get_ShapleyValues",
+]
