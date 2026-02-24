@@ -33,8 +33,8 @@ bw = ANOVAapprox.get_orderDependentBW(AS, [4, 4])
 aU = ANOVAapprox.approx(X, y, U=AS, N=bw, basis="chui2")
 aU.approximate(lam=lambdas, solver="lsqr")
 
-err_l2_ds = ads.get_l2_error(ads)[0.0]
-err_l2_U = aU.get_l2_error(aU)[0.0]
+err_l2_ds = ads.get_l2_error(lam=0.0)
+err_l2_U = aU.get_l2_error(lam=0.0)
 err_l2_rand_ds = ads.get_l2_error(X=X_test, y=y_test)[0.0]
 err_l2_rand_U = aU.get_l2_error(X=X_test, y=y_test)[0.0]
 
