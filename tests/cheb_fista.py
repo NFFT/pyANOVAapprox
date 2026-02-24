@@ -17,8 +17,8 @@ max_iter = 50
 bw = [20, 4]
 lambdas = np.array([0.0, 1.0])
 
-(X, y) = TestFunctionCheb.generateData(M)
-(X_test, y_test) = TestFunctionCheb.generateData(M)
+X, y = TestFunctionCheb.generateData(M)
+X_test, y_test = TestFunctionCheb.generateData(M)
 
 
 #### ####
@@ -33,12 +33,8 @@ aU = ANOVAapprox.approx(X.T, y, U=TestFunctionCheb.AS, N=bw, basis="cheb")
 aU.approximate(lam=lambdas, solver="fista")
 
 
-err_L2_ds = ads.get_L2_error(TestFunctionCheb.norm(), TestFunctionCheb.fc)[
-    0.0
-]
-err_L2_U = aU.get_L2_error(TestFunctionCheb.norm(), TestFunctionCheb.fc)[
-    0.0
-]
+err_L2_ds = ads.get_L2_error(TestFunctionCheb.norm(), TestFunctionCheb.fc)[0.0]
+err_L2_U = aU.get_L2_error(TestFunctionCheb.norm(), TestFunctionCheb.fc)[0.0]
 err_l2_ds = ads.get_l2_error()[0.0]
 err_l2_U = aU.get_l2_error()[0.0]
 err_l2_rand_ds = ads.get_l2_error(X=X_test.T, y=y_test)[0.0]

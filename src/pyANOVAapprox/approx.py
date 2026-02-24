@@ -1,9 +1,10 @@
+import copy
+
+import pyANOVAapprox.analysis as ANOVAanalysis
+import pyANOVAapprox.bandwidth as ANOVAbandwidth
+import pyANOVAapprox.errors as ANOVAerrors
 from pyANOVAapprox import *
 from pyANOVAapprox.fista import *
-import pyANOVAapprox.bandwidth as ANOVAbandwidth
-import pyANOVAapprox.analysis as ANOVAanalysis
-import pyANOVAapprox.errors as ANOVAerrors
-import copy
 
 bases = ["per", "cos", "cheb", "std", "chui1", "chui2", "chui3", "chui4", "mixed"]
 types = {
@@ -53,8 +54,8 @@ def get_orderDependentBW(U, N):
             N_bw[i] = N[len(U[i]) - 1]
 
     return N_bw
-    
-    
+
+
 def transformX(X, basis):
     Xt = X.copy()
     if basis == "cos":
@@ -68,8 +69,10 @@ def transformX(X, basis):
         Xt += 1
         Xt /= 4
     return Xt
-    
+
+
 compute_bandwidth = ANOVAbandwidth.compute_bandwidth
+
 
 class approx_setting:
     def __init__(
@@ -85,16 +88,18 @@ class approx_setting:
         ds=None,
         lam={0.0},
     ):
-    
-        #if N == None or len(N) == 0:
+
+        # if N == None or len(N) == 0:
         #    ValueError("please define N")
-        
+
         if (
             U == None or len(U) == 0
         ):  # setting U   #approx(X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, ds::Int, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
             U = get_superposition_set(parent.X.shape[1], ds)
 
-        if N is not None and not isinstance(N[0], tuple):  # setting N    #approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, U::Vector{Vector{Int}}, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
+        if N is not None and not isinstance(
+            N[0], tuple
+        ):  # setting N    #approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, U::Vector{Vector{Int}}, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
             ds = max(len(u) for u in U)
 
             if len(N) != len(U) and len(N) != ds:
@@ -124,17 +129,17 @@ class approx_setting:
             fastmult = False if classification else True
         if basis not in bases:
             raise ValueError("Basis not found.")
-        #if y[0].dtype != vtypes[basis]:
+        # if y[0].dtype != vtypes[basis]:
         #    raise TypeError(
         #        "Periodic functions require complex vectors, nonperiodic functions real vectors."
         #    )
-            
+
         # if basis == "mixed":
         #    if len(basis_vect) == 0:
         #        raise ValueError("please call approx with basis_vect for a NFMT transform.")
         #    if len(basis_vect) < max(max(u) for u in U) +1:
         #        raise ValueError("basis_vect must have an entry for every dimension.")
-    
+
         self.basis = basis
         self.U = U
         self.N = N
@@ -144,7 +149,7 @@ class approx_setting:
         self.parallel = parallel
         self.lam = lam
         self.parent = parent
-        
+
 
 ### approx:
 # A struct to hold the scattered data function approximation.
@@ -180,10 +185,21 @@ class approx:
         ds=None,
         lam={0.0},
     ):
-        
+
         self.X = X
-        
-        setting = approx_setting(parent = self,U=U,N=N,basis=basis,classification=classification,basis_vect=basis_vect,fastmult=fastmult,parallel=parallel,ds=ds,lam=lam)
+
+        setting = approx_setting(
+            parent=self,
+            U=U,
+            N=N,
+            basis=basis,
+            classification=classification,
+            basis_vect=basis_vect,
+            fastmult=fastmult,
+            parallel=parallel,
+            ds=ds,
+            lam=lam,
+        )
 
         min_X = np.min(X)
         max_X = np.max(X)
@@ -197,13 +213,13 @@ class approx:
         elif setting.basis == "cheb":
             if min_X < -1 or max_X > 1:
                 raise ValueError("Nodes need to be between -1 and 1.")
-        
+
         self.y = y
         self.setting = [setting]
         self.trafo = [None]
         self.fc = [{}]
         self.aktsetting = 0
-        
+
         if setting.N is not None:
             self.addTrafo()
 
@@ -213,25 +229,25 @@ class approx:
         self.aktsetting = settingnr
         self.trafo.append(None)
         self.fc.append({})
-        
-    def getSettingNr(self, settingnr = None):
+
+    def getSettingNr(self, settingnr=None):
         return self.aktsetting if settingnr is None else settingnr
-        
-    def getSetting(self, settingnr = None):
+
+    def getSetting(self, settingnr=None):
         return self.setting[self.getSettingNr(settingnr)]
-        
-    def getTrafo(self, settingnr = None):
+
+    def getTrafo(self, settingnr=None):
         return self.trafo[self.getSettingNr(settingnr)]
-        
-    def getFc(self, settingnr = None):
+
+    def getFc(self, settingnr=None):
         return self.fc[self.getSettingNr(settingnr)]
-        
-    def addTrafo(self, settingnr = None):
+
+    def addTrafo(self, settingnr=None):
         setting = self.getSetting(settingnr)
         if settingnr is None:
             settingnr = self.aktsetting
-        #print(setting.U)
-        #print(setting.N)
+        # print(setting.U)
+        # print(setting.N)
         self.trafo[settingnr] = GroupedTransform(
             system=gt_systems[setting.basis],
             U=setting.U,
@@ -241,13 +257,15 @@ class approx:
             parallel=setting.parallel,
             basis_vect=setting.basis_vect,
         )
-    
-    def _approximate(self, lam, settingnr, max_iter, weights, verbose, solver, tol):  # helpfuntion for approximate
+
+    def _approximate(
+        self, lam, settingnr, max_iter, weights, verbose, solver, tol
+    ):  # helpfuntion for approximate
         setting = self.getSetting(settingnr)
-            
+
         if setting.N is None:
             raise ValueError("N is not set. You may want to use autoapproximate")
-            
+
         M = self.X.shape[0]
         nf = get_NumFreq(self.getTrafo(settingnr).settings)
         w = np.ones(nf, "float")
@@ -259,7 +277,9 @@ class approx:
                 w = weights
 
         if setting.basis in {"per", "mixed"}:
-            what = GroupedCoefficients(self.getTrafo(settingnr).settings, np.array(w, "complex"))
+            what = GroupedCoefficients(
+                self.getTrafo(settingnr).settings, np.array(w, "complex")
+            )
         else:
             what = GroupedCoefficients(self.getTrafo(settingnr).settings, w)
 
@@ -279,13 +299,16 @@ class approx:
             def matv(fhat):
                 return np.concatenate(
                     (
-                        self.getTrafo(settingnr) @ GroupedCoefficients(self.getTrafo(settingnr).settings, fhat),
+                        self.getTrafo(settingnr)
+                        @ GroupedCoefficients(self.getTrafo(settingnr).settings, fhat),
                         diag_w_sqrt * fhat,
                     )
                 )
 
             def rmatv(f):
-                return (self.getTrafo(settingnr).H @ f[:M]).vec() + (diag_w_sqrt * f[M:])
+                return (self.getTrafo(settingnr).H @ f[:M]).vec() + (
+                    diag_w_sqrt * f[M:]
+                )
 
             F_vec = DeferredLinearOperator(
                 mfunc=matv, rmfunc=rmatv, shape=(M + nf, nf), dtype=types[setting.basis]
@@ -299,7 +322,9 @@ class approx:
                 iter_lim=max_iter,
                 show=verbose,
             )
-            self.getFc(settingnr)[lam] = GroupedCoefficients(self.getTrafo(settingnr).settings, tmp[0])
+            self.getFc(settingnr)[lam] = GroupedCoefficients(
+                self.getTrafo(settingnr).settings, tmp[0]
+            )
 
         elif solver == "fista":
             ghat = GroupedCoefficients(self.getTrafo(settingnr).settings, tmp)
@@ -317,14 +342,21 @@ class approx:
             raise ValueError("Solver not found.")
 
     def approximate(
-        self, lam=None, settingnr = None, max_iter=50, weights=None, verbose=False, solver=None, tol=1e-8
+        self,
+        lam=None,
+        settingnr=None,
+        max_iter=50,
+        weights=None,
+        verbose=False,
+        solver=None,
+        tol=1e-8,
     ):
         """
         If lam is a np.ndarray of dtype float, this function computes the approximation for the regularization parameters contained in lam.
         If lam is a float, this function computes the approximation for the regularization parameter lam.
         """
         setting = self.getSetting(settingnr)
-        
+
         if lam is None:
             lam = setting.lam
         else:
@@ -333,7 +365,7 @@ class approx:
             if not isinstance(lam, set):
                 lam = {lam}
             setting.lam = lam
-        
+
         for l in lam:
             self._approximate(
                 l,
@@ -344,18 +376,30 @@ class approx:
                 solver=solver,
                 tol=tol,
             )
-    
+
     estimate_rates = ANOVAbandwidth.estimate_rates
-            
-    def _autoapproximate(self, lam, settingnr, B, maxiter, solver, verbose, solver_max_iter, solver_weights, solver_verbose, solver_tol):
+
+    def _autoapproximate(
+        self,
+        lam,
+        settingnr,
+        B,
+        maxiter,
+        solver,
+        verbose,
+        solver_max_iter,
+        solver_weights,
+        solver_verbose,
+        solver_tol,
+    ):
         setting = self.getSetting(settingnr)
-        
+
         n = len(self.y)
         if B is None:
-            B = bisect(lambda x: x*math.log(x)-n, 1, n)
+            B = bisect(lambda x: x * math.log(x) - n, 1, n)
 
-        D = dict([(u,tuple([1.0]*len(u))) for u in setting.U])
-        t = dict([(u,tuple([1.0]*len(u))) for u in setting.U])
+        D = dict([(u, tuple([1.0] * len(u))) for u in setting.U])
+        t = dict([(u, tuple([1.0] * len(u))) for u in setting.U])
 
         for idx in range(maxiter):
             bw = compute_bandwidth(B, D, t)
@@ -363,58 +407,87 @@ class approx:
                 self.addSetting(setting)
                 settingnr = self.aktsetting
                 setting = self.getSetting(settingnr)
-                
+
             setting.N = [bw[i] for i in setting.U]
             self.addTrafo()
-            
-            if verbose:
-              print("bw in iteration", str(idx+1), "are", str(bw))
-              
-            self.approximate(lam=lam,solver=solver,max_iter=solver_max_iter, weights=solver_weights, verbose=solver_verbose, tol=solver_tol)
 
-            D, t = self.estimate_rates(lam = lam, verbose = verbose)
             if verbose:
-              print("estimated rates in iteration", str(idx+1), "are D =", str(D), "and t =", str(t))
+                print("bw in iteration", str(idx + 1), "are", str(bw))
+
+            self.approximate(
+                lam=lam,
+                solver=solver,
+                max_iter=solver_max_iter,
+                weights=solver_weights,
+                verbose=solver_verbose,
+                tol=solver_tol,
+            )
+
+            D, t = self.estimate_rates(lam=lam, verbose=verbose)
+            if verbose:
+                print(
+                    "estimated rates in iteration",
+                    str(idx + 1),
+                    "are D =",
+                    str(D),
+                    "and t =",
+                    str(t),
+                )
         return D, t
-        
-    def autoapproximate(self, lam = None, settingnr = None, B = None, maxiter = 2, solver="lsqr", verbose=False, solver_max_iter=50, solver_weights=None, solver_verbose=False, solver_tol=1e-8):
+
+    def autoapproximate(
+        self,
+        lam=None,
+        settingnr=None,
+        B=None,
+        maxiter=2,
+        solver="lsqr",
+        verbose=False,
+        solver_max_iter=50,
+        solver_weights=None,
+        solver_verbose=False,
+        solver_tol=1e-8,
+    ):
         setting = self.getSetting(settingnr)
-        
+
         if lam is None:
             lam = setting.lam
         else:
             if not isinstance(lam, set):
                 lam = {lam}
             setting.lam = lam
-        
+
         if len(lam) == 1:
             return self._autoapproximate(
-                    lam.pop(),
-                    settingnr = settingnr, 
-                    B = B, 
-                    maxiter = maxiter, 
-                    solver=solver, 
-                    verbose=verbose,
-                    solver_max_iter=solver_max_iter, 
-                    solver_weights=solver_weights, 
-                    solver_verbose=solver_verbose, 
-                    solver_tol=solver_tol
-                )
+                lam.pop(),
+                settingnr=settingnr,
+                B=B,
+                maxiter=maxiter,
+                solver=solver,
+                verbose=verbose,
+                solver_max_iter=solver_max_iter,
+                solver_weights=solver_weights,
+                solver_verbose=solver_verbose,
+                solver_tol=solver_tol,
+            )
         else:
-            return {l: self._autoapproximate(
+            return {
+                l: self._autoapproximate(
                     l,
-                    settingnr = settingnr, 
-                    B = B, 
-                    maxiter = maxiter, 
-                    solver=solver, 
+                    settingnr=settingnr,
+                    B=B,
+                    maxiter=maxiter,
+                    solver=solver,
                     verbose=verbose,
-                    solver_max_iter=solver_max_iter, 
-                    solver_weights=solver_weights, 
-                    solver_verbose=solver_verbose, 
-                    solver_tol=solver_tol
-                ) for l in lam}
+                    solver_max_iter=solver_max_iter,
+                    solver_weights=solver_weights,
+                    solver_verbose=solver_verbose,
+                    solver_tol=solver_tol,
+                )
+                for l in lam
+            }
 
-    def evaluate(self, settingnr = None, lam=None, X=None):
+    def evaluate(self, settingnr=None, lam=None, X=None):
         """
         This function evaluates the approximation with optional node matrix X and regularization lam.
 
@@ -424,7 +497,7 @@ class approx:
         - If neither are given: evaluate at self.X for all lam.
         """
         setting = self.getSetting(settingnr)
-            
+
         if X is not None:
             if setting.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
                 raise ValueError("Nodes need to be between -0.5 and 0.5.")
@@ -450,7 +523,7 @@ class approx:
         else:  # evaluate( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Vector{ComplexF64},Vector{Float64}}}
             return {λ: trafo @ self.getFc(settingnr)[λ] for λ in setting.lam}
 
-    def evaluateANOVAterms(self, settingnr = None, X=None, lam=None):
+    def evaluateANOVAterms(self, settingnr=None, X=None, lam=None):
         """
         This function evaluates the single ANOVA terms of the approximation on the nodes of matrix X and regularization lam.
 
@@ -459,8 +532,8 @@ class approx:
         """
         setting = self.getSetting(settingnr)
         if X is None:
-            X=self.X
-            
+            X = self.X
+
         if setting.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
             raise ValueError("Nodes need to be between -0.5 and 0.5.")
         elif setting.basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
@@ -498,7 +571,7 @@ class approx:
                 results[λ] = vals
             return results
 
-    def evaluateSHAPterms(self, settingnr = None, X=None, lam=None):
+    def evaluateSHAPterms(self, settingnr=None, X=None, lam=None):
         """
         This function evaluates for each dimension the Shapley contribution to the overall approximation on the nodes of matrix X and regularization lam.
 
@@ -506,9 +579,9 @@ class approx:
         - If lam is not given: evaluate at X for all lam.
         """
         setting = self.getSetting(settingnr)
-            
+
         if X is None:
-            X=self.X
+            X = self.X
         if setting.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
             raise ValueError("Nodes need to be between -0.5 and 0.5.")
         elif setting.basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
@@ -548,7 +621,7 @@ class approx:
                 results[l] = values
 
             return results
-    
+
     _l2_error = ANOVAerrors._l2_error
     get_l2_error = ANOVAerrors.get_l2_error
     _mse = ANOVAerrors._mse
@@ -561,7 +634,7 @@ class approx:
     get_acc = ANOVAerrors.get_acc
     _auc = ANOVAerrors._auc
     get_auc = ANOVAerrors.get_auc
-    
+
     _variances = ANOVAanalysis._variances
     get_variances = ANOVAanalysis.get_variances
     _GSI = ANOVAanalysis._GSI
