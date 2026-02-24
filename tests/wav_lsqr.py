@@ -26,17 +26,17 @@ y_test = np.array([f(X_test[i, :].T) for i in range(M)])
 ads = ANOVAapprox.approx(X, y, ds=ds, N=bw, basis="chui2")
 ads.approximate(lam=lambdas, solver="lsqr")
 
-print("AR: " + str(sum(ANOVAapprox.get_AttributeRanking(ads, 0.0))))
-assert abs(sum(ANOVAapprox.get_AttributeRanking(ads, 0.0)) - 1) < 0.0001
+print("AR: " + str(sum(ads.get_AttributeRanking(lam=0.0))))
+assert abs(sum(ads.get_AttributeRanking(lam=0.0)) - 1) < 0.0001
 
 bw = ANOVAapprox.get_orderDependentBW(AS, [4, 4])
 aU = ANOVAapprox.approx(X, y, U=AS, N=bw, basis="chui2")
 aU.approximate(lam=lambdas, solver="lsqr")
 
-err_l2_ds = ANOVAapprox.get_l2_error(ads)[0.0]
-err_l2_U = ANOVAapprox.get_l2_error(aU)[0.0]
-err_l2_rand_ds = ANOVAapprox.get_l2_error(ads, X_test, y_test)[0.0]
-err_l2_rand_U = ANOVAapprox.get_l2_error(aU, X_test, y_test)[0.0]
+err_l2_ds = ads.get_l2_error(lam=0.0)
+err_l2_U = aU.get_l2_error(lam=0.0)
+err_l2_rand_ds = ads.get_l2_error(X=X_test, y=y_test)[0.0]
+err_l2_rand_U = aU.get_l2_error(X=X_test, y=y_test)[0.0]
 
 print("== WAVELET LSQR ==")
 print("l2 ds: ", err_l2_ds)

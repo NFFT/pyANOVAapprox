@@ -6,6 +6,7 @@ dist/
 *.py[cod]
 __pycache__/
 venv/
+venv2/
 
 bin/
 /lib64/
@@ -16,3 +17,4 @@ src/pyNFFT3/lib/AVX2/libgomp-1.dll
 src/pyNFFT3/lib/AVX2/libgcc_s_seh-1.dll
 src/pyNFFT3/lib/AVX2/libwinpthread-1.dll
 simpleTest/venv/
+bandwidth_detection.py

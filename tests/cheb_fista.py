@@ -17,8 +17,8 @@ max_iter = 50
 bw = [20, 4]
 lambdas = np.array([0.0, 1.0])
 
-(X, y) = TestFunctionCheb.generateData(M)
-(X_test, y_test) = TestFunctionCheb.generateData(M)
+X, y = TestFunctionCheb.generateData(M)
+X_test, y_test = TestFunctionCheb.generateData(M)
 
 
 #### ####
@@ -33,16 +33,12 @@ aU = ANOVAapprox.approx(X.T, y, U=TestFunctionCheb.AS, N=bw, basis="cheb")
 aU.approximate(lam=lambdas, solver="fista")
 
 
-err_L2_ds = ANOVAapprox.get_L2_error(ads, TestFunctionCheb.norm(), TestFunctionCheb.fc)[
-    0.0
-]
-err_L2_U = ANOVAapprox.get_L2_error(ads, TestFunctionCheb.norm(), TestFunctionCheb.fc)[
-    0.0
-]
-err_l2_ds = ANOVAapprox.get_l2_error(ads)[0.0]
-err_l2_U = ANOVAapprox.get_l2_error(aU)[0.0]
-err_l2_rand_ds = ANOVAapprox.get_l2_error(ads, X_test.T, y_test)[0.0]
-err_l2_rand_U = ANOVAapprox.get_l2_error(aU, X_test.T, y_test)[0.0]
+err_L2_ds = ads.get_L2_error(TestFunctionCheb.norm(), TestFunctionCheb.fc)[0.0]
+err_L2_U = aU.get_L2_error(TestFunctionCheb.norm(), TestFunctionCheb.fc)[0.0]
+err_l2_ds = ads.get_l2_error()[0.0]
+err_l2_U = aU.get_l2_error()[0.0]
+err_l2_rand_ds = ads.get_l2_error(X=X_test.T, y=y_test)[0.0]
+err_l2_rand_U = aU.get_l2_error(X=X_test.T, y=y_test)[0.0]
 
 
 print("== PERIODIC FISTA ==")

@@ -30,7 +30,7 @@ ads = ANOVAapprox.approx(X, y, ds=ds, basis="per", N=bw)
 ads.approximate(lam=lambdas, solver="lsqr")
 
 
-attr_ranking = ANOVAapprox.get_AttributeRanking(ads, lam=0.0)
+attr_ranking = ads.get_AttributeRanking(lam=0.0)
 print("AR: ", np.sum(attr_ranking))
 assert abs(np.sum(attr_ranking) - 1) < 1e-4
 
@@ -40,12 +40,12 @@ aU = ANOVAapprox.approx(X, y, U=AS, N=bw, basis="per")
 aU.approximate(lam=lambdas, solver="lsqr")
 
 
-err_L2_ds = ANOVAapprox.get_L2_error(ads, norm(), fc)[0.0]
-err_L2_U = ANOVAapprox.get_L2_error(aU, norm(), fc)[0.0]
-err_l2_ds = ANOVAapprox.get_l2_error(ads)[0.0]
-err_l2_U = ANOVAapprox.get_l2_error(aU)[0.0]
-err_l2_rand_ds = ANOVAapprox.get_l2_error(ads, X_test, y_test)[0.0]
-err_l2_rand_U = ANOVAapprox.get_l2_error(aU, X_test, y_test)[0.0]
+err_L2_ds = ads.get_L2_error(norm(), fc)[0.0]
+err_L2_U = aU.get_L2_error(norm(), fc)[0.0]
+err_l2_ds = ads.get_l2_error()[0.0]
+err_l2_U = aU.get_l2_error()[0.0]
+err_l2_rand_ds = ads.get_l2_error(X=X_test, y=y_test)[0.0]
+err_l2_rand_U = aU.get_l2_error(X=X_test, y=y_test)[0.0]
 
 
 print("== PERIODIC LSQR ==")

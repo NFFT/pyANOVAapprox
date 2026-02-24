@@ -17,8 +17,8 @@ max_iter = 50
 bw = [20, 4]
 lambdas = np.array([0.0, 1.0])
 
-(X, y) = TestFunctionCheb.generateData(M)
-(X_test, y_test) = TestFunctionCheb.generateData(M)
+X, y = TestFunctionCheb.generateData(M)
+X_test, y_test = TestFunctionCheb.generateData(M)
 
 
 #### ####
@@ -32,24 +32,19 @@ ads.approximate(lam=lambdas, solver="lsqr")
 aU = ANOVAapprox.approx(X.T, y, U=TestFunctionCheb.AS, N=bw, basis="cheb")
 aU.approximate(lam=lambdas, solver="lsqr")
 
+err_L2_ds = ads.get_L2_error(TestFunctionCheb.norm(), TestFunctionCheb.fc)[0.0]
+err_L2_U = aU.get_L2_error(TestFunctionCheb.norm(), TestFunctionCheb.fc)[0.0]
+err_l2_ds = ads.get_l2_error()[0.0]
+err_l2_U = aU.get_l2_error()[0.0]
+err_l2_rand_ds = ads.get_l2_error(X=X_test.T, y=y_test)[0.0]
+err_l2_rand_U = aU.get_l2_error(X=X_test.T, y=y_test)[0.0]
 
-err_L2_ds = ANOVAapprox.get_L2_error(ads, TestFunctionCheb.norm(), TestFunctionCheb.fc)[
-    0.0
-]
-err_L2_U = ANOVAapprox.get_L2_error(ads, TestFunctionCheb.norm(), TestFunctionCheb.fc)[
-    0.0
-]
-err_l2_ds = ANOVAapprox.get_l2_error(ads)[0.0]
-err_l2_U = ANOVAapprox.get_l2_error(aU)[0.0]
-err_l2_rand_ds = ANOVAapprox.get_l2_error(ads, X_test.T, y_test)[0.0]
-err_l2_rand_U = ANOVAapprox.get_l2_error(aU, X_test.T, y_test)[0.0]
-
-ANOVAapprox.get_mse(ads)
-ANOVAapprox.get_mse(ads, X_test.T, y_test)
-ANOVAapprox.get_mad(ads)
-ANOVAapprox.get_mad(ads, X_test.T, y_test)
-ANOVAapprox.get_GSI(ads)
-ANOVAapprox.get_GSI(ads, Dict=True)
+ads.get_mse()
+ads.get_mse(X=X_test.T, y=y_test)
+ads.get_mad()
+ads.get_mad(X=X_test.T, y=y_test)
+ads.get_GSI()
+ads.get_GSI(Dict=True)
 ads.evaluate()
 ads.evaluate(X=X_test.T)
 
