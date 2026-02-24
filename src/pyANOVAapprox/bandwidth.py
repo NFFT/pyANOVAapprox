@@ -5,9 +5,11 @@ def getfcu(ghat, u):
     idx = [s.u for s in ghat.settings].index(u)
     bws = ghat.settings[idx].bandwidths
 
-    fcu = ghat[u].reshape(bws[::-1] - 1)
-    fcu = np.permute_dims(fcu, range(len(bws))[::-1])
-
+    #fcu = ghat[u].reshape(bws[::-1] - 1)
+    #fcu = np.permute_dims(fcu, range(len(bws))[::-1])
+    fcu = ghat[u].reshape(bws - 1)
+    fcu = np.permute_dims(fcu, range(len(bws)))
+    
     return fcu
 
 
@@ -30,7 +32,7 @@ def compute_bandwidth(B, D, t):
     us = set(D.keys()) - {()}
     bw = {u: [6] * len(u) for u in us}
     bw[()] = []
-
+    
     minfreqs = sum(math.prod((bw[u][j] - 1) for j in range(len(u))) for u in us)
     if B < minfreqs:
         raise ValueError(f"Budget too small: {B} < {minfreqs}")
@@ -156,19 +158,19 @@ def estimate_rates(self, lam, settingnr=None, verbose=False):
                 )
 
             if (idx is None) or idx >= len(axissum):
-                D[u][len(u) - j - 1] = math.nan
-                t[u][len(u) - j - 1] = math.nan
+                D[u][j] = math.nan
+                t[u][j] = math.nan
             else:
                 idx = min(len(axissum), len(axissum) - idx + 2)
                 Duj, tuj = fitrate_log(np.cumsum((axissum[0:idx])[::-1])[::-1])
-                D[u][len(u) - j - 1] = Duj
-                t[u][len(u) - j - 1] = -tuj / 2
+                D[u][j] = Duj
+                t[u][j] = -tuj / 2
 
                 if verbose:
                     x = np.arange(1, idx + 1)
                     ax.plot(
                         x,
-                        D[u][len(u) - j - 1] * x ** (-2 * t[u][len(u) - j - 1]),
+                        D[u][j] * x ** (-2 * t[u][j]),
                         linewidth=2,
                         #                        color=j
                     )

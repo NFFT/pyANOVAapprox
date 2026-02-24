@@ -246,8 +246,6 @@ class approx:
         setting = self.getSetting(settingnr)
         if settingnr is None:
             settingnr = self.aktsetting
-        # print(setting.U)
-        # print(setting.N)
         self.trafo[settingnr] = GroupedTransform(
             system=gt_systems[setting.basis],
             U=setting.U,
