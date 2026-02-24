@@ -26,8 +26,8 @@ y_test = np.array([f(X_test[i, :].T) for i in range(M)])
 ads = ANOVAapprox.approx(X, y, ds=ds, N=bw, basis="chui2")
 ads.approximate(lam=lambdas, solver="lsqr")
 
-print("AR: " + str(sum(ads.get_AttributeRanking(0.0))))
-assert abs(sum(ads.get_AttributeRanking(0.0)) - 1) < 0.0001
+print("AR: " + str(sum(ads.get_AttributeRanking(lam=0.0))))
+assert abs(sum(ads.get_AttributeRanking(lam=0.0)) - 1) < 0.0001
 
 bw = ANOVAapprox.get_orderDependentBW(AS, [4, 4])
 aU = ANOVAapprox.approx(X, y, U=AS, N=bw, basis="chui2")
