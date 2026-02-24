@@ -5,11 +5,11 @@ def getfcu(ghat, u):
     idx = [s.u for s in ghat.settings].index(u)
     bws = ghat.settings[idx].bandwidths
 
-    #fcu = ghat[u].reshape(bws[::-1] - 1)
-    #fcu = np.permute_dims(fcu, range(len(bws))[::-1])
+    # fcu = ghat[u].reshape(bws[::-1] - 1)
+    # fcu = np.permute_dims(fcu, range(len(bws))[::-1])
     fcu = ghat[u].reshape(bws - 1)
     fcu = np.permute_dims(fcu, range(len(bws)))
-    
+
     return fcu
 
 
@@ -32,7 +32,7 @@ def compute_bandwidth(B, D, t):
     us = set(D.keys()) - {()}
     bw = {u: [6] * len(u) for u in us}
     bw[()] = []
-    
+
     minfreqs = sum(math.prod((bw[u][j] - 1) for j in range(len(u))) for u in us)
     if B < minfreqs:
         raise ValueError(f"Budget too small: {B} < {minfreqs}")
