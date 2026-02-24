@@ -6,12 +6,13 @@ import math
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-import pyANOVAapprox as ANOVAapprox
 from TestFunctionPeriodic import *
 
+import pyANOVAapprox as ANOVAapprox
+
+
 def TestFunction(x):
-    return b_spline_2(x[0])*b_spline_4(x[1])*b_spline_6(x[2])
+    return b_spline_2(x[0]) * b_spline_4(x[1]) * b_spline_6(x[2])
 
 
 rng = np.random.default_rng(1234)
@@ -33,7 +34,7 @@ lambdas = np.array([0.0])  # used regularisation parameters λ
 ## Generation of the data ##
 ############################
 
-X = rng.random((M, d)) # construct the evaluation points for training
+X = rng.random((M, d))  # construct the evaluation points for training
 y = np.array(
     [TestFunction(X[i, :].T) for i in range(M)], dtype=complex
 )  # evaluate the function at these points

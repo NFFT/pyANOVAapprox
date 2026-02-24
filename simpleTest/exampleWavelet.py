@@ -91,7 +91,7 @@ label = list(anova_model.U[1:])
 l = len(label)
 plt.figure()
 x_values = np.arange(1, l + 1)
-(markers, stemlines, baseline) = plt.stem(
+markers, stemlines, baseline = plt.stem(
     x_values,  # X-Werte: 1 bis l
     gsis,  # Y-Werte: gsis
     linefmt="C0-",  # Stil der Stiele

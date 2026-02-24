@@ -1,6 +1,7 @@
-#from pyANOVAapprox import *
-import pyGroupedTransforms as gt
+# from pyANOVAapprox import *
 import numpy as np
+import pyGroupedTransforms as gt
+
 
 def _l2_error(self, settingnr, lam, X, y):  # helpfunction for get_l2error
     if y is None:
@@ -14,7 +15,7 @@ def _l2_error(self, settingnr, lam, X, y):  # helpfunction for get_l2error
     return np.linalg.norm(y_eval - y) / np.linalg.norm(y)
 
 
-def get_l2_error(self, settingnr = None, X=None, y=None, lam=None):
+def get_l2_error(self, settingnr=None, X=None, y=None, lam=None):
     """
     Computes the relative ``\ell_2`` error for an approx object a.
 
@@ -36,7 +37,10 @@ def get_l2_error(self, settingnr = None, X=None, y=None, lam=None):
     if lam is not None:
         return self._l2_error(settingnr, lam, X, y)
     else:
-        return {l: self._l2_error(settingnr, l, X, y) for l in self.getSetting(settingnr).lam}
+        return {
+            l: self._l2_error(settingnr, l, X, y)
+            for l in self.getSetting(settingnr).lam
+        }
 
 
 def _mse(self, settingnr, lam, X, y):  # helpfunction for get_mse
@@ -51,7 +55,7 @@ def _mse(self, settingnr, lam, X, y):  # helpfunction for get_mse
     return 1 / len(y) * (np.linalg.norm(y_eval - y) ** 2)
 
 
-def get_mse(self, settingnr = None, X=None, y=None, lam=None):
+def get_mse(self, settingnr=None, X=None, y=None, lam=None):
     """
     Computes the mean square error (mse) for an approx object a.
 
@@ -73,7 +77,9 @@ def get_mse(self, settingnr = None, X=None, y=None, lam=None):
     if lam is not None:
         return self._mse(settingnr, lam, X, y)
     else:
-        return {l: self._mse(settingnr, l, X, y) for l in self.getSetting(settingnr).lam}
+        return {
+            l: self._mse(settingnr, l, X, y) for l in self.getSetting(settingnr).lam
+        }
 
 
 def _mad(self, settingnr, lam, X, y):  # helpfunction for get_mad
@@ -88,7 +94,7 @@ def _mad(self, settingnr, lam, X, y):  # helpfunction for get_mad
     return 1 / len(y) * np.linalg.norm(y_eval - y, ord=1)
 
 
-def get_mad(self, settingnr = None, X=None, y=None, lam=None):
+def get_mad(self, settingnr=None, X=None, y=None, lam=None):
     """
     Computes the mean absolute deviation (mad) for an approx object a.
 
@@ -110,25 +116,30 @@ def get_mad(self, settingnr = None, X=None, y=None, lam=None):
     if lam is not None:
         return self._mad(settingnr, lam, X, y)
     else:
-        return {l: self._mad(settingnr, l, X, y) for l in self.getSetting(settingnr).lam}
+        return {
+            l: self._mad(settingnr, l, X, y) for l in self.getSetting(settingnr).lam
+        }
 
 
 def _L2_error(self, norm, bc_fun, settingnr, lam):
-    #print(settingnr)
+    # print(settingnr)
     if self.getSetting(settingnr).basis in {"per", "cos", "cheb", "std", "mixed"}:
         error = norm**2
         index_set = gt.get_IndexSet(self.getTrafo(settingnr).settings, self.X.shape[1])
 
         for i in range(index_set.shape[1]):
             k = index_set[:, i]
-            error += abs(bc_fun(k) - self.getFc(settingnr)[lam][i]) ** 2 - abs(bc_fun(k)) ** 2
+            error += (
+                abs(bc_fun(k) - self.getFc(settingnr)[lam][i]) ** 2
+                - abs(bc_fun(k)) ** 2
+            )
 
         return np.sqrt(error) / norm
     else:
         raise NotImplementedError("L2 error is not implemented for this basis.")
 
 
-def get_L2_error(self, norm, bc_fun, settingnr = None, lam=None):
+def get_L2_error(self, norm, bc_fun, settingnr=None, lam=None):
     """
     Computes the relative L2 error of a function approximation for an `approx` object `a`.
 
@@ -138,11 +149,14 @@ def get_L2_error(self, norm, bc_fun, settingnr = None, lam=None):
     - If only `a`, `norm`, and `bc_fun` are provided,
     this function computes the relative L2 error for all available regularization parameters.
     """
-    #print(settingnr)
+    # print(settingnr)
     if lam is not None:
         return self._L2_error(norm, bc_fun, settingnr, lam)
     else:
-        return {l: self._L2_error(norm, bc_fun, settingnr, l) for l in self.getSetting(settingnr).lam}
+        return {
+            l: self._L2_error(norm, bc_fun, settingnr, l)
+            for l in self.getSetting(settingnr).lam
+        }
 
 
 def _acc(self, settingnr, lam, X, y):  # helpfunction for get_acc
@@ -156,12 +170,16 @@ def _acc(self, settingnr, lam, X, y):  # helpfunction for get_acc
 
     return np.sum(np.sign(y_eval) == y) / len(y) * 100.0
 
-def get_acc(self, settingnr = None, X=None, y=None, lam=None):
+
+def get_acc(self, settingnr=None, X=None, y=None, lam=None):
 
     if lam is not None:
         return self._acc(settingnr, lam, X, y)
     else:
-        return {l: self._acc(settingnr, l, X, y) for l in self.getSetting(settingnr).lam}
+        return {
+            l: self._acc(settingnr, l, X, y) for l in self.getSetting(settingnr).lam
+        }
+
 
 def auc_score(y_true, y_pred_proba):
     combined_data = sorted(zip(y_pred_proba, y_true), key=lambda x: x[0], reverse=True)
@@ -199,6 +217,7 @@ def auc_score(y_true, y_pred_proba):
         tpr, fpr = new_tpr, new_fpr
     return auc
 
+
 def _auc(self, settingnr, lam, X, y):
     if y is None:
         y = self.y
@@ -216,13 +235,16 @@ def _auc(self, settingnr, lam, X, y):
     return auc_score(y_int, y_sc)
 
 
-def get_auc(self, settingnr = None, X=None, y=None, lam=None):
+def get_auc(self, settingnr=None, X=None, y=None, lam=None):
 
     if lam is not None:
         return self._auc(settingnr, lam, X, y)
     else:
-        return {l: self._auc(settingnr, l, X, y) for l in self.getSetting(settingnr).lam}
-        
+        return {
+            l: self._auc(settingnr, l, X, y) for l in self.getSetting(settingnr).lam
+        }
+
+
 __all__ = [
     "_l2_error",
     "get_l2_error",
@@ -235,5 +257,5 @@ __all__ = [
     "_acc",
     "get_acc",
     "_auc",
-    "get_auc"
+    "get_auc",
 ]
