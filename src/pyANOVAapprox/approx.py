@@ -351,42 +351,30 @@ class approx:
         setting = self.getSetting(settingnr)
         
         n = len(self.y)
-        
-        B = bisect(lambda x: x*math.log(x)-n, 1, n)
+        if B is None:
+            B = bisect(lambda x: x*math.log(x)-n, 1, n)
 
         D = dict([(u,tuple([1.0]*len(u))) for u in setting.U])
         t = dict([(u,tuple([1.0]*len(u))) for u in setting.U])
 
         for idx in range(maxiter):
             bw = compute_bandwidth(B, D, t)
-            #print(self.setting[settingnr].lam)
             if setting.N is not None:
                 self.addSetting(setting)
                 settingnr = self.aktsetting
                 setting = self.getSetting(settingnr)
                 
             setting.N = [bw[i] for i in setting.U]
-                
             self.addTrafo()
             
-            #open("../dat/s" * string(setting) * "_rates_bw_it" * string(idx) * ".dat", "w") do io
-            #    write(io, string(bw))
-            #end
+            if verbose:
+              print("bw in iteration", str(idx+1), "are", str(bw))
+              
             self.approximate(lam=lam,solver=solver,max_iter=solver_max_iter, weights=solver_weights, verbose=solver_verbose, tol=solver_tol)
 
-            #L_test = GroupedTransform("exp", us, [ bw[u] for u in us ], hcat(X_test...) .- .5)
-            #L2error = norm(L_test*ghat - y_test)/sqrt(n_test)
-            #L2norm = norm(y_test)/sqrt(n_test)
-            #open("../dat/s" * string(setting) * "_rates_l2error.csv", "a") do io
-            #    dat = [ idx L2error ]
-            #    writedlm(io, dat, ',')
-            #end
-
-
             D, t = self.estimate_rates(lam = lam, verbose = verbose)
-            #print(D)
-            #print(t)
-            #savefig("../dat/s" * string(setting) * "_rates_it" * string(idx) * ".png")
+            if verbose:
+              print("estimated rates in iteration", str(idx+1), "are D =", str(D), "and t =", str(t))
         return D, t
         
     def autoapproximate(self, lam = None, settingnr = None, B = None, maxiter = 2, solver="lsqr", verbose=False, solver_max_iter=50, solver_weights=None, solver_verbose=False, solver_tol=1e-8):

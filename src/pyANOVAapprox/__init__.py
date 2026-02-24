@@ -1,6 +1,7 @@
 import math
 import threading
 from math import acos, isnan
+import matplotlib.pyplot as plt
 
 import numpy as np
 from pyGroupedTransforms import *

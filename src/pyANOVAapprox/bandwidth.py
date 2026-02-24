@@ -15,8 +15,9 @@ def getaxissum(ghat, u, j):
     bws = ghat.settings[idx].bandwidths
 
     fcuj = np.sum(abs(fcu)**2, axis = tuple([i for i in range(len(u)) if i != j]))
+    
     fcuj = fcuj[np.mod(range(int(bws[j]/2),bws[j]),bws[j]-1)] + fcuj[range(int(bws[j]/2)-1,-1,-1)]
-
+    #fcuj = np.concatenate(fcuj[math.ceil(bws[j]/2):] + [fcuj[0]]) + fcuj[math.ceil(bws[j]/2)-1::-1]
     return fcuj
 
 def compute_bandwidth(B, D, t):
@@ -72,7 +73,7 @@ def fitrate_log(y):
     so = sum(omega)
     denom = so * ws2lx - (wslx ** 2)
 
-    a = (ws2lx * wsly - wslxly) / denom
+    a = (ws2lx * wsly - wslxly * wslx) / denom
     b = (so * wslxly - wslx * wsly) / denom
 
     return math.exp(a), b
@@ -112,29 +113,51 @@ def estimate_rates(self, lam, settingnr = None, verbose = False):
             continue
         
         if verbose:
-            pass #TODO:plot
+            fig, ax = plt.subplots()
+            ax.set_xscale("log")
+            ax.set_yscale("log")
+            ax.set_title(str(u))
+            ps.append(ax)
         
         for j in range(len(u)):
             axissum = getaxissum(self.getFc(settingnr)[lam], u, j)
+            
             axissumnum = getaxissum(nhat, u, j)
             idx = next((i for i, v in enumerate((axissum > threshold*axissumnum)[::-1]) if v), None)
             
             if verbose:
-                pass #TODO:plot
+                
+                y = np.cumsum(axissum[::-1])[::-1]
+                ax.plot(
+                    range(1,len(y)+1),
+                    y,
+                    label=u[j],
+                    marker="o",
+#                    color=j
+                )
                
             if (idx is None) or idx >= len(axissum):
-                D[u][j] = math.nan
-                t[u][j] = math.nan
+                D[u][len(u)-j-1] = math.nan
+                t[u][len(u)-j-1] = math.nan
             else:
                 idx = min(len(axissum), len(axissum)-idx+2)
                 Duj,tuj = fitrate_log(np.cumsum((axissum[0:idx])[::-1])[::-1])
-                D[u][j] = Duj
-                t[u][j] = -tuj/2
+                D[u][len(u)-j-1] = Duj
+                t[u][len(u)-j-1] = -tuj/2
     
                 if verbose:
-                    pass #TODO:plot
+                    x = np.arange(1, idx + 1)
+                    ax.plot(
+                        x,
+                        D[u][len(u)-j-1] * x ** (-2 * t[u][len(u)-j-1]),
+                        linewidth=2,
+#                        color=j
+                    )
     if verbose:
-        pass #TODO:plot
+        plt.figure(figsize=(12, 9))
+        for ax in ps:
+            plt.sca(ax)
+        plt.show()
       
     return D, t  
     

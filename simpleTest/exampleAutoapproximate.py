@@ -36,8 +36,8 @@ lambdas = np.array([0.0])  # used regularisation parameters λ
 X = rng.random((M, d)) # construct the evaluation points for training
 y = np.array(
     [TestFunction(X[i, :].T) for i in range(M)], dtype=complex
-X = X - 0.5
 )  # evaluate the function at these points
+X = X - 0.5
 X_test = rng.random((M_test, d))
 y_test = np.array(
     [TestFunction(X_test[i, :].T) for i in range(M_test)], dtype=complex
