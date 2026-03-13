@@ -13,17 +13,22 @@ def getfcu(ghat, u):
     return fcu
 
 
-def getaxissum(ghat, u, j):
+def getaxissum(ghat, u, j, system):
     fcu = getfcu(ghat, u)
     idx = [s.u for s in ghat.settings].index(u)
     bws = ghat.settings[idx].bandwidths
 
     fcuj = np.sum(abs(fcu) ** 2, axis=tuple([i for i in range(len(u)) if i != j]))
 
-    fcuj = (
-        fcuj[np.mod(range(int(bws[j] / 2), bws[j]), bws[j] - 1)]
-        + fcuj[range(int(bws[j] / 2) - 1, -1, -1)]
-    )
+    if system == "exp":
+        fcuj = (
+            fcuj[np.mod(range(int(bws[j] / 2), bws[j]), bws[j] - 1)]
+            + fcuj[range(int(bws[j] / 2) - 1, -1, -1)]
+        )
+    elif system == "cos":
+        pass
+    else:
+        raise ValueError("For this basis is estimate rates not implemented")
     # fcuj = np.concatenate(fcuj[math.ceil(bws[j]/2):] + [fcuj[0]]) + fcuj[math.ceil(bws[j]/2)-1::-1]
     return fcuj
 
@@ -106,7 +111,7 @@ def most_common_value(data):
     return t[max_index]
 
 
-def estimate_rates(self, lam, settingnr=None, verbose=False):
+def estimate_rates(self, lam, settingnr=None, verbosity=0):
     us = [s.u for s in self.getTrafo(settingnr).settings]
     nhat = GroupedCoefficients(
         self.getTrafo(settingnr).settings,
@@ -118,25 +123,28 @@ def estimate_rates(self, lam, settingnr=None, verbose=False):
 
     mcl = np.exp(most_common_value(np.log(abs(self.getFc(settingnr)[lam].data))))
     threshold = 100 * mcl**2
-
-    if verbose:
-        ps = []
+    
+    if verbosity>5:
+        if not os.path.exists(os.path.join("log","figures")):
+            os.mkdir(os.path.join("log","figures"))
+        num = 0
+        
+    system = self.getTrafo(settingnr).system
 
     for u in us:
         if len(u) == 0:
             continue
 
-        if verbose:
+        if verbosity>5:
             fig, ax = plt.subplots()
             ax.set_xscale("log")
             ax.set_yscale("log")
             ax.set_title(str(u))
-            ps.append(ax)
 
         for j in range(len(u)):
-            axissum = getaxissum(self.getFc(settingnr)[lam], u, j)
+            axissum = getaxissum(self.getFc(settingnr)[lam], u, j, system)
 
-            axissumnum = getaxissum(nhat, u, j)
+            axissumnum = getaxissum(nhat, u, j, system)
             idx = next(
                 (
                     i
@@ -146,7 +154,7 @@ def estimate_rates(self, lam, settingnr=None, verbose=False):
                 None,
             )
 
-            if verbose:
+            if verbosity>5:
 
                 y = np.cumsum(axissum[::-1])[::-1]
                 ax.plot(
@@ -166,7 +174,7 @@ def estimate_rates(self, lam, settingnr=None, verbose=False):
                 D[u][j] = Duj
                 t[u][j] = -tuj / 2
 
-                if verbose:
+                if verbosity>5:
                     x = np.arange(1, idx + 1)
                     ax.plot(
                         x,
@@ -174,10 +182,12 @@ def estimate_rates(self, lam, settingnr=None, verbose=False):
                         linewidth=2,
                         #                        color=j
                     )
-    if verbose:
-        plt.figure(figsize=(12, 9))
-        for ax in ps:
-            plt.sca(ax)
-        plt.show()
+        if verbosity>5:
+            #plt.figure(figsize=(12, 9))
+            #for ax in ps:
+            #    plt.sca(ax)
+            fig.savefig(os.path.join("log","figures", str(num).strip()+ "_rates_" + str(u).strip() + ".png"))
+            num = num + 1
+            plt.close(fig) 
 
     return D, t
