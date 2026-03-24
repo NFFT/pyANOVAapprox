@@ -230,7 +230,7 @@ class approx:
         self.fc = [{}]
         self.aktsetting = 0
         self.lam = {}
-        for i in lam
+        for i in lam:
             self.lam[i] = [0]
 
         if setting.N is not None:
@@ -243,7 +243,7 @@ class approx:
         self.trafo.append(None)
         self.fc.append({})
 
-    def getSettingNr(self, settingnr=None, lam = None):
+    def getSettingNr(self, settingnr=None, lam = None, warn = True):
         if lam is None:
             return self.aktsetting if settingnr is None else settingnr
         else:
@@ -373,6 +373,7 @@ class approx:
         If lam is a np.ndarray of dtype float, this function computes the approximation for the regularization parameters contained in lam.
         If lam is a float, this function computes the approximation for the regularization parameter lam.
         """
+        
         setting = self.getSetting(settingnr)
         
         if lam is None:
@@ -410,7 +411,7 @@ class approx:
         solver_verbose,
         solver_tol,
     ):
-        settingnrs = [settingnr]
+        settingnrs = []
         setting = self.getSetting(settingnr)
 
         n = len(self.y)
@@ -490,7 +491,7 @@ class approx:
         solver_verbose=False,
         solver_tol=1e-8,
     ):
-        settingnr = getSettingNr(settingnr)
+        settingnr = self.getSettingNr(settingnr)
         setting = self.getSetting(settingnr)
 
         if lam is None:
@@ -550,9 +551,9 @@ class approx:
         if (
             lam is not None
         ):  # evaluate( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Vector{ComplexF64},Vector{Float64}}
-            return trafo @ self.getFc(settingnr)[lam]
+            return trafo @ self.getFc(settingnr, lam)[lam]
         else:  # evaluate( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Vector{ComplexF64},Vector{Float64}}}
-            return {λ: trafo @ self.getFc(settingnr)[λ] for λ in self.lam.keys()}
+            return {λ: trafo @ self.getFc(settingnr, lam)[λ] for λ in self.lam.keys()}
 
     def evaluateANOVAterms(self, settingnr=None, X=None, lam=None):
         """
