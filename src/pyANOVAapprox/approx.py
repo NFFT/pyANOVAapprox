@@ -1,5 +1,9 @@
 import copy
 import warnings
+import os
+import csv
+import math
+from bisect import bisect
 
 import pyANOVAapprox.analysis as ANOVAanalysis
 import pyANOVAapprox.bandwidth as ANOVAbandwidth
@@ -398,6 +402,88 @@ class approx:
 
     estimate_rates = ANOVAbandwidth.estimate_rates
 
+    def _compute_cv_error(
+        self,
+        D,
+        t,
+        setting,
+        lam,
+        solver,
+        solver_max_iter,
+        solver_weights,
+        solver_verbose,
+        solver_tol,
+        min_B_step=2,
+        cv_max_iter=20,
+        verbosity=0,
+    ):
+        """
+        Computes GCV error for a fixed budget B.
+
+        If optimize_budget=True, performs a binary-search style minimization over
+        [B_min, B_max] and returns (best_B, best_cv_error).
+        Otherwise returns cv_error for the provided B.
+        """
+
+        def _cv_for_budget(B_curr):
+            bw = compute_bandwidth(B_curr, D, t)
+
+            # Create temporary setting for this bandwidth
+            temp_setting = copy.copy(setting)
+            temp_setting.N = [bw[i] for i in setting.U]
+
+            # Save active setting and attach temporary objects
+            self.addSetting(temp_setting)
+            settingnr_temp = self.aktsetting
+            self.addTrafo(settingnr_temp)
+
+            
+            self._approximate(
+                lam,
+                settingnr=settingnr_temp,
+                max_iter=solver_max_iter,
+                weights=solver_weights,
+                verbose=solver_verbose,
+                solver=solver,
+                tol=solver_tol,
+            )
+
+            M = self.X.shape[0]
+            nfreqs = np.sum([np.prod(np.array(bw[u])-1) for u in temp_setting.U])+1
+            return 1/M * np.linalg.norm(self.evaluate(settingnr=settingnr_temp, lam=lam) - self.y)**2/(1-nfreqs/M)**2
+
+        B_min = float(max(sum(5 ** len(u) for u in setting.U), 1))
+        B_max = float(max(B_min + 1.0, len(self.y) / 3.0))
+
+        # Binary-search style minimization using local slope sign from finite differences.
+        for cv_iter in range(cv_max_iter):
+            mid = 0.5 * (B_min + B_max)
+            delta = max(1.0, 0.01 * mid)
+            left_B = max(B_min, mid - delta)
+            right_B = min(B_max, mid + delta)
+
+            cv_left = _cv_for_budget(left_B)
+            cv_right = _cv_for_budget(right_B)
+
+            if verbosity > 4:
+                print(
+                    f"  CV iteration {cv_iter + 1}: "
+                    f"B_left={left_B:.2f}, B_right={right_B:.2f}, "
+                    f"cv_left={cv_left:.6e}, cv_right={cv_right:.6e}"
+                )
+
+            if cv_right < cv_left:
+                B_min = mid
+            else:
+                B_max = mid
+
+            if (B_max - B_min) <= min_B_step:
+                break
+
+        best_B = 0.5 * (B_min + B_max)
+        best_cv = _cv_for_budget(best_B)
+        return best_B, best_cv
+
     def _autoapproximate(
         self,
         lam,
@@ -410,6 +496,9 @@ class approx:
         solver_weights,
         solver_verbose,
         solver_tol,
+        cross_validation,
+        min_B_step,
+        cv_max_iter,
     ):
         settingnrs = []
         setting = self.getSetting(settingnr)
@@ -430,6 +519,29 @@ class approx:
         for idx in range(maxiter):
             if verbosity > 0:
                 print("===== Iteration ", str(idx + 1), " =====")
+            
+            # Optional: Use cross-validation to find optimal B
+            if cross_validation:
+                if verbosity > 0:
+                    print("Running binary search for optimal bandwidth via cross-validation...")
+
+                B, cv_val = self._compute_cv_error(
+                    D=D,
+                    t=t,
+                    setting=copy.copy(setting),
+                    lam=lam,
+                    solver=solver,
+                    solver_max_iter=solver_max_iter,
+                    solver_weights=solver_weights,
+                    solver_verbose=solver_verbose,
+                    solver_tol=solver_tol,
+                    min_B_step=min_B_step,
+                    cv_max_iter=cv_max_iter,
+                    verbosity=verbosity,
+                )
+                if verbosity > 0:
+                    print(f"Optimal B from CV: {B:.1f} (cv={cv_val:.6e})")
+            
             bw = compute_bandwidth(B, D, t)
             if setting.N is not None:
                 self.addSetting(setting)
@@ -490,7 +602,23 @@ class approx:
         solver_weights=None,
         solver_verbose=False,
         solver_tol=1e-8,
+        cross_validation=False,
+        min_B_step=2,
+        cv_max_iter=20,
     ):
+        """
+        Automatic approximation with optional cross-validation for bandwidth selection.
+        
+        Parameters:
+        -----------
+        use_cross_validation : bool, optional
+            If True, uses cross-validation with binary search to find optimal bandwidth B
+            in each iteration. Default is False.
+        cv_tol : float, optional
+            Convergence tolerance for cross-validation binary search. Default is 1e-3.
+        cv_max_iter : int, optional
+            Maximum number of iterations for cross-validation binary search. Default is 20.
+        """
         settingnr = self.getSettingNr(settingnr)
         setting = self.getSetting(settingnr)
 
@@ -515,6 +643,9 @@ class approx:
                 solver_weights=solver_weights,
                 solver_verbose=solver_verbose,
                 solver_tol=solver_tol,
+                cross_validation=cross_validation,
+                min_B_step=min_B_step,
+                cv_max_iter=cv_max_iter,
             )
             self.lam[l] = self.lam[l] + settingnrs
 
