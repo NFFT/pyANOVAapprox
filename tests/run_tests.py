@@ -17,6 +17,7 @@ def run_tests():
         "tests/cheb_lsqr.py",
         "tests/per_fista.py",
         "tests/per_lsqr.py",
+        "tests/mixed_lsqr.py",
     ]
 
     for test_file in test_files:

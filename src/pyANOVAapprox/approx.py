@@ -76,6 +76,41 @@ def transformX(X, basis):
     return Xt
 
 
+def _validate_nodes_for_basis(X, basis, basis_vect=None):
+    min_X = np.min(X)
+    max_X = np.max(X)
+
+    if basis in {"per", "chui1", "chui2", "chui3", "chui4"}:
+        if min_X < -0.5 or max_X >= 0.5:
+            raise ValueError("Nodes need to be between -0.5 and 0.5.")
+    elif basis == "cos":
+        if min_X < 0 or max_X > 1:
+            raise ValueError("Nodes need to be between 0 and 1.")
+    elif basis == "cheb":
+        if min_X < -1 or max_X > 1:
+            raise ValueError("Nodes need to be between -1 and 1.")
+    elif basis == "mixed":
+        if basis_vect is None or len(basis_vect) != X.shape[1]:
+            raise ValueError("basis_vect must have an entry for every dimension.")
+
+        for j, basis_j in enumerate(basis_vect):
+            col = X[:, j]
+            if basis_j == "exp":
+                if np.min(col) < -0.5 or np.max(col) >= 0.5:
+                    raise ValueError(
+                        f"Nodes for exp basis in dimension {j} must be in [-0.5, 0.5)."
+                    )
+            elif basis_j in {"cos", "alg"}:
+                if np.min(col) < 0 or np.max(col) > 1:
+                    raise ValueError(
+                        f"Nodes for {basis_j} basis in dimension {j} must be in [0, 1]."
+                    )
+            else:
+                raise ValueError(
+                    "basis_vect entries for mixed basis must be in {'exp', 'cos', 'alg'}."
+                )
+
+
 compute_bandwidth = ANOVAbandwidth.compute_bandwidth
 
 
@@ -139,11 +174,11 @@ class approx_setting:
         #        "Periodic functions require complex vectors, nonperiodic functions real vectors."
         #    )
 
-        # if basis == "mixed":
-        #    if len(basis_vect) == 0:
-        #        raise ValueError("please call approx with basis_vect for a NFMT transform.")
-        #    if len(basis_vect) < max(max(u) for u in U) +1:
-        #        raise ValueError("basis_vect must have an entry for every dimension.")
+        if basis == "mixed":
+            if len(basis_vect) == 0:
+                raise ValueError("please call approx with basis_vect for a NFMT transform.")
+            if len(basis_vect) < self.parent.X.shape[1]:
+                raise ValueError("basis_vect must have an entry for every dimension.")
 
         self.basis = basis
         self.U = U
@@ -215,18 +250,7 @@ class approx:
             lam=lam,
         )
 
-        min_X = np.min(X)
-        max_X = np.max(X)
-
-        if setting.basis in {"per", "chui1", "chui2", "chui3", "chui4"}:
-            if min_X < -0.5 or max_X >= 0.5:
-                raise ValueError("Nodes need to be between -0.5 and 0.5.")
-        elif setting.basis == "cos":
-            if min_X < 0 or max_X > 1:
-                raise ValueError("Nodes need to be between 0 and 1.")
-        elif setting.basis == "cheb":
-            if min_X < -1 or max_X > 1:
-                raise ValueError("Nodes need to be between -1 and 1.")
+        _validate_nodes_for_basis(X, setting.basis, setting.basis_vect)
 
         self.y = y
         self.setting = [setting]
@@ -662,12 +686,7 @@ class approx:
         setting = self.getSetting(settingnr, lam)
 
         if X is not None:
-            if setting.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
-                raise ValueError("Nodes need to be between -0.5 and 0.5.")
-            elif setting.basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
-                raise ValueError("Nodes need to be between 0 and 1.")
-            elif setting.basis == "cheb" and (np.min(X) < -1 or np.max(X) > 1):
-                raise ValueError("Nodes need to be between -1 and 1.")
+            _validate_nodes_for_basis(X, setting.basis, setting.basis_vect)
 
             trafo = GroupedTransform(
                 system=gt_systems[setting.basis],
@@ -697,19 +716,14 @@ class approx:
         if X is None:
             X = self.X
 
-        if setting.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
-            raise ValueError("Nodes need to be between -0.5 and 0.5.")
-        elif setting.basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
-            raise ValueError("Nodes need to be between 0 and 1.")
-        elif setting.basis == "cheb" and (np.min(X) < -1 or np.max(X) > 1):
-            raise ValueError("Nodes need to be between -1 and 1.")
+        _validate_nodes_for_basis(X, setting.basis, setting.basis_vect)
 
         Xt = transformX(X, setting.basis)
 
-        if self.setting[settingnr].basis == "per":
-            values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "complex")
+        if setting.basis in {"per", "mixed"}:
+            values = np.zeros((Xt.shape[0], len(setting.U)), "complex")
         else:
-            values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "float")
+            values = np.zeros((Xt.shape[0], len(setting.U)), "float")
 
         trafo = GroupedTransform(
             system=gt_systems[setting.basis],
@@ -745,12 +759,7 @@ class approx:
 
         if X is None:
             X = self.X
-        if setting.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
-            raise ValueError("Nodes need to be between -0.5 and 0.5.")
-        elif setting.basis == "cos" and (np.min(X) < 0 or np.max(X) > 1):
-            raise ValueError("Nodes need to be between 0 and 1.")
-        elif setting.basis == "cheb" and (np.min(X) < -1 or np.max(X) > 1):
-            raise ValueError("Nodes need to be between -1 and 1.")
+        _validate_nodes_for_basis(X, setting.basis, setting.basis_vect)
 
         d = X.shape[1]
         M = X.shape[0]
@@ -758,9 +767,9 @@ class approx:
         if (
             lam is not None
         ):  # evaluateSHAPterms( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Matrix{ComplexF64},Matrix{Float64}}
-            terms = self.evaluateANOVAterms(X, lam)
+            terms = self.evaluateANOVAterms(settingnr=settingnr, X=X, lam=lam)
 
-            Dtype = np.complex128 if setting.basis == "per" else np.float64
+            Dtype = np.complex128 if setting.basis in {"per", "mixed"} else np.float64
             values = np.zeros((M, d), dtype=Dtype)
 
             for i in range(d):
@@ -772,9 +781,9 @@ class approx:
         else:  # evaluateSHAPterms( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Matrix{ComplexF64},Matrix{Float64}}}
             results = {}
             for l in self.lam.keys():
-                terms = self.evaluateANOVAterms(X, l)
+                terms = self.evaluateANOVAterms(settingnr=settingnr, X=X, lam=l)
 
-                Dtype = np.complex128 if setting.basis == "per" else np.float64
+                Dtype = np.complex128 if setting.basis in {"per", "mixed"} else np.float64
                 values = np.zeros((M, d), dtype=Dtype)
 
                 for i in range(d):
