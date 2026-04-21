@@ -20,3 +20,4 @@ src/pyNFFT3/lib/AVX2/libwinpthread-1.dll
 simpleTest/venv/
 bandwidth_detection*
 cross_validation*
+/src/pyANOVAapprox/.ipynb_checkpoints/

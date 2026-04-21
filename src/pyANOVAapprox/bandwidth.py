@@ -43,7 +43,8 @@ def compute_bandwidth(B, D, t):
         raise ValueError(f"Budget too small: {B} < {minfreqs}")
 
     def fun_lmbda_u(lmbda, u):
-        p1 = math.prod((bw[u][j] - 1) for j in range(len(u)) if math.isnan(t[u][j]))
+        p1 = math.prod((bw[u][j] - 1) for j in range(len(u)) if not math.isnan(t[u][j]))
+
         p2 = math.prod(
             ((2 * t[u][j] * D[u][j]) / lmbda) ** (0.5 / t[u][j])
             for j in range(len(u))
@@ -59,7 +60,6 @@ def compute_bandwidth(B, D, t):
         for u in us:
             total += fun_lmbda_u(math.exp(lmbda), u)
         return total - B
-
     lmbda = math.exp(bisect(lambda t: fun_lmbda(t, B), -100, 100))
 
     for u in us:
@@ -69,7 +69,7 @@ def compute_bandwidth(B, D, t):
                 bwuj = ((2 * t[u][j] * D[u][j]) / (lmbda * sizeIu)) ** (
                     0.5 / t[u][j]
                 ) + 1
-                bw[u][j] = 2 * round(0.5 * bwuj)
+                bw[u][j] = max(6, 2 * round(0.5 * bwuj))
 
     return bw
 
@@ -164,7 +164,6 @@ def estimate_rates(self, lam, settingnr=None, verbosity=0):
                     marker="o",
                     #                    color=j
                 )
-
             if (idx is None) or idx >= len(axissum):
                 D[u][j] = math.nan
                 t[u][j] = math.nan
@@ -186,7 +185,11 @@ def estimate_rates(self, lam, settingnr=None, verbosity=0):
             #plt.figure(figsize=(12, 9))
             #for ax in ps:
             #    plt.sca(ax)
-            fig.savefig(os.path.join("log","figures", str(num).strip()+ "_rates_" + str(u).strip() + ".png"))
+            time = ""
+            if verbosity > 8:
+                from datetime import datetime
+                time = str(round(datetime.timestamp(datetime.now())))
+            fig.savefig(os.path.join("log","figures", time + "_" + str(num).strip() + "_rates_" + str(u).strip() + ".png"))
             num = num + 1
             plt.close(fig) 
 

@@ -426,7 +426,8 @@ class approx:
                 os.mkdir("log")
             with open('log/log.csv', 'w', newline='') as csvfile:
                 csv.writer(csvfile, delimiter=',').writerow(["it"] + setting.U)
-
+        if verbosity>2:
+            print("B =", B)
         for idx in range(maxiter):
             if verbosity > 0:
                 print("===== Iteration ", str(idx + 1), " =====")
@@ -476,6 +477,9 @@ class approx:
                     wr = csv.writer(csvfile, delimiter=',')
                     wr.writerow(["D in it"+str(idx+1)] + [str(D[i]) for i in setting.U])
                     wr.writerow(["t in it"+str(idx+1)] + [str(t[i]) for i in setting.U])
+
+            if all([math.isnan(j) for j in sum([D[i] for i in D],[])]) and all([math.isnan(j) for j in sum([t[i] for i in D],[])]):
+                break
         return settingnrs
 
     def autoapproximate(
