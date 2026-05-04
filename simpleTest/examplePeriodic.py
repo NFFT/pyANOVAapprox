@@ -89,7 +89,7 @@ ads.approximate(lam=lambdas, max_iter=max_iter, solver="lsqr")
 ## get approximation accuracy ##
 ################################
 
-# mse = ANOVAapprox.get_mse(ads) # get mse error at the given training points
+# mse = ads.get_mse() # get mse error at the given training points
 mse = ads.get_mse(X=X_test, y=y_test)  # get mse error at the test points
 λ_min = min(
     mse, key=mse.get

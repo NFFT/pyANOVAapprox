@@ -81,10 +81,10 @@ print("Total number of used parameters = " + str(len(anova_model.fc[lambdas[0]].
 #######################
 
 ### Do sensitivity analysis ####
-gsis = ANOVAapprox.get_GSI(
-    anova_model, 0.0
+anova_model.get_GSI(
+  lam=0.0
 )  # calculates indices for importance of terms (gsis is vector, with indices belonging to terms in anova_model.U)
-gsis_as_dict = ANOVAapprox.get_GSI(anova_model, 0.0, dict=true)
+anova_model.get_GSI(lam=0.0, Dict=true)
 
 y_min_calc = 10 ** (np.min(np.log10(gsis)) - 0.5)
 label = list(anova_model.U[1:])
@@ -113,8 +113,8 @@ plt.show()
 ################################
 
 ### error analysis ###
-mse_train = ANOVAapprox.get_mse(anova_model, lam=0.0)
-mse_test = ANOVAapprox.get_mse(anova_model, X_test, y_test, lam=0.0)
+mse_train = anova_model.get_mse(lam=0.0)
+mse_test = anova_model.get_mse(X=X_test, y=y_test, lam=0.0)
 
 print("MSE on test points: " + str(mse_test))
 
@@ -122,13 +122,13 @@ print("MSE on test points: " + str(mse_test))
 ## Approximation with better suited index set ##
 ################################################
 
-U = ANOVAapprox.get_ActiveSet(anova_model, [0.01, 0.01], lam=0.0)
+U = anova_model.get_ActiveSet(eps=[0.01, 0.01], lam=0.0)
 print("Found index-set U: " + str(U))
-anova_model = ANOVAapprox.approx(
-    X, y, U=U, N=[i + 2 for i in N], basis=basis
+anova_model = anova_model.approx(
+    X=X, y=y, U=U, N=[i + 2 for i in N], basis=basis
 )  # increase number of paramers in N for the important terms
 anova_model.approximate(lam=lambdas)
 print("Total number of used parameters = " + str(len(anova_model.fc[lambdas[0]].vec())))
-mse_train = ANOVAapprox.get_mse(anova_model, lam=0.0)
-mse_test = ANOVAapprox.get_mse(anova_model, X_test, y_test, lam=0.0)
+mse_train = anova_model.get_mse(lam=0.0)
+mse_test = anova_model.get_mse(X=X_test, y=y_test, lam=0.0)
 print("MSE on test points after ANOVA truncation: " + str(mse_test))

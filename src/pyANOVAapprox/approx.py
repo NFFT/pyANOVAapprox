@@ -187,6 +187,9 @@ class approx:
     ):
 
         self.X = X
+        
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have different lengths.")
 
         setting = approx_setting(
             parent=self,
@@ -384,7 +387,7 @@ class approx:
         B,
         maxiter,
         solver,
-        verbose,
+        verbosity,
         solver_max_iter,
         solver_weights,
         solver_verbose,
@@ -398,8 +401,16 @@ class approx:
 
         D = dict([(u, tuple([1.0] * len(u))) for u in setting.U])
         t = dict([(u, tuple([1.0] * len(u))) for u in setting.U])
+        
+        if verbosity>3:
+            if not os.path.exists("log"):
+                os.mkdir("log")
+            with open('log/log.csv', 'w', newline='') as csvfile:
+                csv.writer(csvfile, delimiter=',').writerow(["it"] + setting.U)
 
         for idx in range(maxiter):
+            if verbosity > 0:
+                print("===== Iteration ", str(idx + 1), " =====")
             bw = compute_bandwidth(B, D, t)
             if setting.N is not None:
                 self.addSetting(setting)
@@ -409,9 +420,14 @@ class approx:
             setting.N = [bw[i] for i in setting.U]
             self.addTrafo()
 
-            if verbose:
-                print("bw in iteration", str(idx + 1), "are", str(bw))
-
+            if verbosity > 0:
+                for i in setting.U:
+                    print("bw in", str(i), ":", bw[i])
+                #print("bw in iteration", str(idx + 1), "are", str(bw))
+                print()
+            if verbosity > 3:
+                with open('log/log.csv', 'a', newline='') as csvfile:
+                    csv.writer(csvfile, delimiter=',').writerow(["bw in it"+str(idx+1)] + [str(bw[i]) for i in setting.U])
             self.approximate(
                 lam=lam,
                 solver=solver,
@@ -421,16 +437,25 @@ class approx:
                 tol=solver_tol,
             )
 
-            D, t = self.estimate_rates(lam=lam, verbose=verbose)
-            if verbose:
-                print(
-                    "estimated rates in iteration",
-                    str(idx + 1),
-                    "are D =",
-                    str(D),
-                    "and t =",
-                    str(t),
-                )
+            D, t = self.estimate_rates(lam=lam, verbosity=verbosity)
+            if verbosity > 1:
+                for i in setting.U:
+                    print("estimated rates for", str(i), ": D = ", str(D[i]), "and t = ", str(t[i]) )
+                print()
+                
+                #print(
+                #    "estimated rates in iteration",
+                #    str(idx + 1),
+                #    "are D =",
+                #    str(D),
+                #    "and t =",
+                #    str(t),
+                #)
+            if verbosity > 3:
+                with open('log/log.csv', 'a', newline='') as csvfile:
+                    wr = csv.writer(csvfile, delimiter=',')
+                    wr.writerow(["D in it"+str(idx+1)] + [str(D[i]) for i in setting.U])
+                    wr.writerow(["t in it"+str(idx+1)] + [str(t[i]) for i in setting.U])
         return D, t
 
     def autoapproximate(
@@ -440,7 +465,7 @@ class approx:
         B=None,
         maxiter=2,
         solver="lsqr",
-        verbose=False,
+        verbosity=0,
         solver_max_iter=50,
         solver_weights=None,
         solver_verbose=False,
@@ -462,7 +487,7 @@ class approx:
                 B=B,
                 maxiter=maxiter,
                 solver=solver,
-                verbose=verbose,
+                verbosity=verbosity,
                 solver_max_iter=solver_max_iter,
                 solver_weights=solver_weights,
                 solver_verbose=solver_verbose,
@@ -476,7 +501,7 @@ class approx:
                     B=B,
                     maxiter=maxiter,
                     solver=solver,
-                    verbose=verbose,
+                    verbosity=verbosity,
                     solver_max_iter=solver_max_iter,
                     solver_weights=solver_weights,
                     solver_verbose=solver_verbose,
@@ -541,7 +566,7 @@ class approx:
 
         Xt = transformX(X, setting.basis)
 
-        if self.setting[settingnr].basis == "per":
+        if self.getSetting(settingnr).basis == "per":
             values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "complex")
         else:
             values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "float")

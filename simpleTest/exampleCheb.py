@@ -86,8 +86,8 @@ ads.approximate(lam=lambdas, max_iter=max_iter, solver="lsqr")
 ## get approximation accuracy ##
 ################################
 
-# mse = ANOVAapprox.get_mse(ads) # get mse error at the given training points
-mse = ANOVAapprox.get_mse(ads, X_test, y_test)  # get mse error at the test points
+# mse = ads.get_mse() # get mse error at the given training points
+mse = ads.get_mse(X=X_test, y=y_test)  # get mse error at the test points
 λ_min = min(
     mse, key=mse.get
 )  # get the regularisation parameter which leads to the minimal error
@@ -100,7 +100,7 @@ print("mse = " + str(mse_min))
 ###############################################
 
 
-ar = ANOVAapprox.get_AttributeRanking(ads, λ_min)  # get the attrbute ranking
+ar = ads.get_AttributeRanking(lam=λ_min)  # get the attrbute ranking
 
 plt.figure()
 markers, stemlines, baseline = plt.stem(
@@ -121,7 +121,7 @@ plt.grid(True, which="both", ls="--", linewidth=0.5)
 plt.show()  # plot the arrtibute ranking in an logplot
 print("active dimensions: " + str(ar[ar > 1e-2]))
 
-gsis = ANOVAapprox.get_GSI(ads, λ_min)
+gsis = ads.get_GSI(lam=λ_min)
 label = list(ads.U[1:])
 l = len(label)
 plt.figure()
@@ -166,7 +166,7 @@ a.approximate(
     lam=lambdas, max_iter=max_iter, solver="lsqr"
 )  # do the approximation for all specified regularisation parameters
 
-mse = ANOVAapprox.get_mse(a, X_test, y_test)  # get mse error at the test points
+mse = a.get_mse(X=X_test, y=y_test)  # get mse error at the test points
 λ_min = min(
     mse, key=mse.get
 )  # get the regularisation parameter which leads to the minimal error
