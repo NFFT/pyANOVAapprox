@@ -187,7 +187,7 @@ class approx:
     ):
 
         self.X = X
-        
+
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have different lengths.")
 
@@ -401,12 +401,12 @@ class approx:
 
         D = dict([(u, tuple([1.0] * len(u))) for u in setting.U])
         t = dict([(u, tuple([1.0] * len(u))) for u in setting.U])
-        
-        if verbosity>3:
+
+        if verbosity > 3:
             if not os.path.exists("log"):
                 os.mkdir("log")
-            with open('log/log.csv', 'w', newline='') as csvfile:
-                csv.writer(csvfile, delimiter=',').writerow(["it"] + setting.U)
+            with open("log/log.csv", "w", newline="") as csvfile:
+                csv.writer(csvfile, delimiter=",").writerow(["it"] + setting.U)
 
         for idx in range(maxiter):
             if verbosity > 0:
@@ -423,11 +423,13 @@ class approx:
             if verbosity > 0:
                 for i in setting.U:
                     print("bw in", str(i), ":", bw[i])
-                #print("bw in iteration", str(idx + 1), "are", str(bw))
+                # print("bw in iteration", str(idx + 1), "are", str(bw))
                 print()
             if verbosity > 3:
-                with open('log/log.csv', 'a', newline='') as csvfile:
-                    csv.writer(csvfile, delimiter=',').writerow(["bw in it"+str(idx+1)] + [str(bw[i]) for i in setting.U])
+                with open("log/log.csv", "a", newline="") as csvfile:
+                    csv.writer(csvfile, delimiter=",").writerow(
+                        ["bw in it" + str(idx + 1)] + [str(bw[i]) for i in setting.U]
+                    )
             self.approximate(
                 lam=lam,
                 solver=solver,
@@ -440,22 +442,33 @@ class approx:
             D, t = self.estimate_rates(lam=lam, verbosity=verbosity)
             if verbosity > 1:
                 for i in setting.U:
-                    print("estimated rates for", str(i), ": D = ", str(D[i]), "and t = ", str(t[i]) )
+                    print(
+                        "estimated rates for",
+                        str(i),
+                        ": D = ",
+                        str(D[i]),
+                        "and t = ",
+                        str(t[i]),
+                    )
                 print()
-                
-                #print(
+
+                # print(
                 #    "estimated rates in iteration",
                 #    str(idx + 1),
                 #    "are D =",
                 #    str(D),
                 #    "and t =",
                 #    str(t),
-                #)
+                # )
             if verbosity > 3:
-                with open('log/log.csv', 'a', newline='') as csvfile:
-                    wr = csv.writer(csvfile, delimiter=',')
-                    wr.writerow(["D in it"+str(idx+1)] + [str(D[i]) for i in setting.U])
-                    wr.writerow(["t in it"+str(idx+1)] + [str(t[i]) for i in setting.U])
+                with open("log/log.csv", "a", newline="") as csvfile:
+                    wr = csv.writer(csvfile, delimiter=",")
+                    wr.writerow(
+                        ["D in it" + str(idx + 1)] + [str(D[i]) for i in setting.U]
+                    )
+                    wr.writerow(
+                        ["t in it" + str(idx + 1)] + [str(t[i]) for i in setting.U]
+                    )
         return D, t
 
     def autoapproximate(
