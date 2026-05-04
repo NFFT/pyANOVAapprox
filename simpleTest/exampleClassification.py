@@ -97,7 +97,7 @@ print("accuracity = " + str(acc))
 ## Analyze the model to improve the accuracy ##
 ###############################################
 
-ar = ANOVAapprox.get_AttributeRanking(ads, 0.0)  # get the attrbute ranking
+ar = ads.get_AttributeRanking(lam=0.0)  # get the attrbute ranking
 
 plt.figure()
 markers, stemlines, baseline = plt.stem(
@@ -118,7 +118,7 @@ plt.grid(True, which="both", ls="--", linewidth=0.5)
 plt.show()  # plot the arrtibute ranking in an logplot
 print("active dimensions: " + str(ar[ar > 1e-2]))
 
-gsis = ANOVAapprox.get_GSI(ads, 0.0)
+gsis = ads.get_GSI(lam=0.0)
 label = list(ads.U[1:])
 l = len(label)
 plt.figure()

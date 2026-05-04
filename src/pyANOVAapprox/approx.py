@@ -566,7 +566,7 @@ class approx:
 
         Xt = transformX(X, setting.basis)
 
-        if self.setting[settingnr].basis == "per":
+        if self.getSetting(settingnr).basis == "per":
             values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "complex")
         else:
             values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "float")

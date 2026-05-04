@@ -84,8 +84,8 @@ ads.approximate(lam=lambdas, max_iter=max_iter, solver="lsqr")
 ## get approximation accuracy ##
 ################################
 
-# mse = ANOVAapprox.get_mse(ads) # get mse error at the given training points
-mse = ANOVAapprox.get_mse(ads, X_test, y_test)  # get mse error at the test points
+# mse = ads.get_mse() # get mse error at the given training points
+mse = ads.get_mse(X=X_test, y=y_test)  # get mse error at the test points
 λ_min = min(
     mse, key=mse.get
 )  # get the regularisation parameter which leads to the minimal error
@@ -98,7 +98,7 @@ print("mse = " + str(mse_min))
 ###############################################
 
 
-ar = ANOVAapprox.get_AttributeRanking(ads, λ_min)  # get the attrbute ranking
+ar = ads.get_AttributeRanking(lam=λ_min)  # get the attrbute ranking
 
 plt.figure()
 markers, stemlines, baseline = plt.stem(
@@ -119,8 +119,8 @@ plt.grid(True, which="both", ls="--", linewidth=0.5)
 plt.show()  # plot the arrtibute ranking in an logplot
 print("active dimensions: " + str(ar[ar > 1e-2]))
 
-gsis = ANOVAapprox.get_GSI(ads, λ_min)
-label = list(ads.U[1:])
+gsis = ads.get_GSI(lam=λ_min)
+label = list(ads.getSetting().U[1:])
 l = len(label)
 plt.figure()
 x_values = np.arange(1, l + 1)
@@ -150,7 +150,7 @@ print(
 ################################################
 
 Umask = np.append(np.array([True]), gsis > 1e-2)
-U = [ads.U[i] for i in np.arange(0, len(Umask))[Umask]]  # get important subsets
+U = [ads.getSetting().U[i] for i in np.arange(0, len(Umask))[Umask]]  # get important subsets
 bws = M / (math.log10(M) * (len(U) - 1))  # calculate frequencies per subset
 N = [
     math.floor(bws ** (1 / max(1, len(u))) / 2) * 2 for u in U
@@ -164,7 +164,7 @@ a.approximate(
     lam=lambdas, max_iter=max_iter, solver="lsqr"
 )  # do the approximation for all specified regularisation parameters
 
-mse = ANOVAapprox.get_mse(a, X_test, y_test)  # get mse error at the test points
+mse = a.get_mse(X=X_test, y=y_test)  # get mse error at the test points
 λ_min = min(
     mse, key=mse.get
 )  # get the regularisation parameter which leads to the minimal error
@@ -183,7 +183,7 @@ print("mse = " + str(mse_min))
 y_eval_anova = a.evaluateANOVAterms(
     X=X_test, lam=λ_min
 )  # evaluate all of the ANOVA terms
-pos = a.U.index((3,))  # find the index for the subset u=[3]
+pos = a.getSetting().U.index((3,))  # find the index for the subset u=[3]
 y_eval_anova_3 = y_eval_anova.T[pos]
 
 perm = np.argsort(X_test.T[3])
