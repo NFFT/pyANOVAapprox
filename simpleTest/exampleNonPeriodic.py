@@ -150,7 +150,9 @@ print(
 ################################################
 
 Umask = np.append(np.array([True]), gsis > 1e-2)
-U = [ads.getSetting().U[i] for i in np.arange(0, len(Umask))[Umask]]  # get important subsets
+U = [
+    ads.getSetting().U[i] for i in np.arange(0, len(Umask))[Umask]
+]  # get important subsets
 bws = M / (math.log10(M) * (len(U) - 1))  # calculate frequencies per subset
 N = [
     math.floor(bws ** (1 / max(1, len(u))) / 2) * 2 for u in U
