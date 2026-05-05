@@ -567,9 +567,9 @@ class approx:
         Xt = transformX(X, setting.basis)
 
         if self.getSetting(settingnr).basis == "per":
-            values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "complex")
+            values = np.zeros((Xt.shape[0], len(self.getSetting(settingnr).U)), "complex")
         else:
-            values = np.zeros((Xt.shape[0], len(self.setting[settingnr].U)), "float")
+            values = np.zeros((Xt.shape[0], len(self.getSetting(settingnr).U)), "float")
 
         trafo = GroupedTransform(
             system=gt_systems[setting.basis],
