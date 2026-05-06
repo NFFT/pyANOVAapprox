@@ -5,11 +5,11 @@ def getfcu(ghat, u):
     idx = [s.u for s in ghat.settings].index(u)
     bws = ghat.settings[idx].bandwidths
 
-    #fcu = ghat[u].reshape(bws[::-1] - 1)
-    #fcu = np.permute_dims(fcu, range(len(bws))[::-1])
+    # fcu = ghat[u].reshape(bws[::-1] - 1)
+    # fcu = np.permute_dims(fcu, range(len(bws))[::-1])
     fcu = ghat[u].reshape(bws - 1)
     fcu = np.permute_dims(fcu, range(len(bws)))
-    
+
     return fcu
 
 
@@ -37,7 +37,7 @@ def compute_bandwidth(B, D, t):
     us = set(D.keys()) - {()}
     bw = {u: [6] * len(u) for u in us}
     bw[()] = []
-    
+
     minfreqs = sum(math.prod((bw[u][j] - 1) for j in range(len(u))) for u in us)
     if B < minfreqs:
         raise ValueError(f"Budget too small: {B} < {minfreqs}")
@@ -123,19 +123,19 @@ def estimate_rates(self, lam, settingnr=None, verbosity=0):
 
     mcl = np.exp(most_common_value(np.log(abs(self.getFc(settingnr)[lam].data))))
     threshold = 100 * mcl**2
-    
-    if verbosity>5:
-        if not os.path.exists(os.path.join("log","figures")):
-            os.mkdir(os.path.join("log","figures"))
+
+    if verbosity > 5:
+        if not os.path.exists(os.path.join("log", "figures")):
+            os.mkdir(os.path.join("log", "figures"))
         num = 0
-        
+
     system = self.getTrafo(settingnr).system
 
     for u in us:
         if len(u) == 0:
             continue
 
-        if verbosity>5:
+        if verbosity > 5:
             fig, ax = plt.subplots()
             ax.set_xscale("log")
             ax.set_yscale("log")
@@ -154,7 +154,7 @@ def estimate_rates(self, lam, settingnr=None, verbosity=0):
                 None,
             )
 
-            if verbosity>5:
+            if verbosity > 5:
 
                 y = np.cumsum(axissum[::-1])[::-1]
                 ax.plot(
@@ -174,7 +174,7 @@ def estimate_rates(self, lam, settingnr=None, verbosity=0):
                 D[u][j] = Duj
                 t[u][j] = -tuj / 2
 
-                if verbosity>5:
+                if verbosity > 5:
                     x = np.arange(1, idx + 1)
                     ax.plot(
                         x,
@@ -182,12 +182,18 @@ def estimate_rates(self, lam, settingnr=None, verbosity=0):
                         linewidth=2,
                         #                        color=j
                     )
-        if verbosity>5:
-            #plt.figure(figsize=(12, 9))
-            #for ax in ps:
+        if verbosity > 5:
+            # plt.figure(figsize=(12, 9))
+            # for ax in ps:
             #    plt.sca(ax)
-            fig.savefig(os.path.join("log","figures", str(num).strip()+ "_rates_" + str(u).strip() + ".png"))
+            fig.savefig(
+                os.path.join(
+                    "log",
+                    "figures",
+                    str(num).strip() + "_rates_" + str(u).strip() + ".png",
+                )
+            )
             num = num + 1
-            plt.close(fig) 
+            plt.close(fig)
 
     return D, t
