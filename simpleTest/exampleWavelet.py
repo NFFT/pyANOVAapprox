@@ -81,17 +81,10 @@ print("Total number of used parameters = " + str(len(anova_model.getFc()[lambdas
 #######################
 
 ### Do sensitivity analysis ####
-<<<<<<< HEAD
 gsis = anova_model.get_GSI(
   lam=0.0
 )  # calculates indices for importance of terms (gsis is vector, with indices belonging to terms in anova_model.getSetting().U)
 anova_model.get_GSI(lam=0.0, Dict=True)
-=======
-anova_model.get_GSI(
-    lam=0.0
-)  # calculates indices for importance of terms (gsis is vector, with indices belonging to terms in anova_model.U)
-anova_model.get_GSI(lam=0.0, Dict=true)
->>>>>>> 709464a4d2a61674f87df01871485fb8cd80408f
 
 y_min_calc = 10 ** (np.min(np.log10(gsis)) - 0.5)
 label = list(anova_model.getSetting().U[1:])
