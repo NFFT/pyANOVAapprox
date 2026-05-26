@@ -1,27 +1,36 @@
 name: Format Python Code
 on: push
+
 jobs:
   python-code-format:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4 
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           architecture: "x64"
+          
       - name: Display Python version
         run: python --version
+        
       - name: Install packages
         run: pip install black isort
+        
       - name: Formatter
         run: |
           black .
           isort .
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: Auto code format
-          title: Fixes by format action
-          body: This is an auto-generated PR with fixes.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "style: auto code format"
+          title: "Fixes by format action"
+          body: "This is an auto-generated PR with code formatting fixes."
           labels: automated pr
           branch: python-code-format-patches
