@@ -37,10 +37,7 @@ def get_l2_error(self, settingnr=None, X=None, y=None, lam=None):
     if lam is not None:
         return self._l2_error(settingnr, lam, X, y)
     else:
-        return {
-            l: self._l2_error(settingnr, l, X, y)
-            for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._l2_error(settingnr, l, X, y) for l in self.lam.keys()}
 
 
 def _mse(self, settingnr, lam, X, y):  # helpfunction for get_mse
@@ -77,9 +74,7 @@ def get_mse(self, settingnr=None, X=None, y=None, lam=None):
     if lam is not None:
         return self._mse(settingnr, lam, X, y)
     else:
-        return {
-            l: self._mse(settingnr, l, X, y) for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._mse(settingnr, l, X, y) for l in self.lam.keys()}
 
 
 def _mad(self, settingnr, lam, X, y):  # helpfunction for get_mad
@@ -116,21 +111,21 @@ def get_mad(self, settingnr=None, X=None, y=None, lam=None):
     if lam is not None:
         return self._mad(settingnr, lam, X, y)
     else:
-        return {
-            l: self._mad(settingnr, l, X, y) for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._mad(settingnr, l, X, y) for l in self.lam.keys()}
 
 
 def _L2_error(self, norm, bc_fun, settingnr, lam):
     # print(settingnr)
-    if self.getSetting(settingnr).basis in {"per", "cos", "cheb", "std", "mixed"}:
+    if self.getSetting(settingnr, lam).basis in {"per", "cos", "cheb", "std", "mixed"}:
         error = norm**2
-        index_set = gt.get_IndexSet(self.getTrafo(settingnr).settings, self.X.shape[1])
+        index_set = gt.get_IndexSet(
+            self.getTrafo(settingnr, lam).settings, self.X.shape[1]
+        )
 
         for i in range(index_set.shape[1]):
             k = index_set[:, i]
             error += (
-                abs(bc_fun(k) - self.getFc(settingnr)[lam][i]) ** 2
+                abs(bc_fun(k) - self.getFc(settingnr, lam)[lam][i]) ** 2
                 - abs(bc_fun(k)) ** 2
             )
 
@@ -153,10 +148,7 @@ def get_L2_error(self, norm, bc_fun, settingnr=None, lam=None):
     if lam is not None:
         return self._L2_error(norm, bc_fun, settingnr, lam)
     else:
-        return {
-            l: self._L2_error(norm, bc_fun, settingnr, l)
-            for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._L2_error(norm, bc_fun, settingnr, l) for l in self.lam.keys()}
 
 
 def _acc(self, settingnr, lam, X, y):  # helpfunction for get_acc
@@ -176,9 +168,7 @@ def get_acc(self, settingnr=None, X=None, y=None, lam=None):
     if lam is not None:
         return self._acc(settingnr, lam, X, y)
     else:
-        return {
-            l: self._acc(settingnr, l, X, y) for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._acc(settingnr, l, X, y) for l in self.lam.keys()}
 
 
 def auc_score(y_true, y_pred_proba):
@@ -240,9 +230,7 @@ def get_auc(self, settingnr=None, X=None, y=None, lam=None):
     if lam is not None:
         return self._auc(settingnr, lam, X, y)
     else:
-        return {
-            l: self._auc(settingnr, l, X, y) for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._auc(settingnr, l, X, y) for l in self.lam.keys()}
 
 
 __all__ = [

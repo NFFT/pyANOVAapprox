@@ -3,22 +3,22 @@ import numpy as np
 
 
 def _variances(self, settingnr, lam, Dict):  # helpfunction for get_variances
-    setting = self.getSetting(settingnr)
+    setting = self.getSetting(settingnr, lam)
     if setting.basis.startswith("chui"):
-        variances = self.getFc(settingnr)[lam].norms(
+        variances = self.getFc(settingnr, lam)[lam].norms(
             Dict=False, m=int(setting.basis[-1])
         )
     else:
-        variances = self.getFc(settingnr)[lam].norms()
+        variances = self.getFc(settingnr, lam)[lam].norms()
 
     variances = variances[1:]
     if Dict:
         if a.basis.startswith("chui"):
-            variances = self.getFc(settingnr)[lam].norms(
+            variances = self.getFc(settingnr, lam)[lam].norms(
                 Dict=True, m=int(setting.basis[-1])
             )
         else:
-            variances = self.getFc(settingnr)[lam].norms(Dict=True)
+            variances = self.getFc(settingnr, lam)[lam].norms(Dict=True)
 
         return {u: variances[u] for u in list(variances)}
     else:
@@ -37,31 +37,28 @@ def get_variances(self, settingnr=None, lam=None, Dict=False):
     elif (
         lam == None
     ):  # get_variances( a::approx; dict::Bool = false )::Dict{Float64,Union{Vector{Float64},Dict{Vector{Int},Float64}}}
-        return {
-            l: self._variances(settingnr, l, Dict)
-            for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._variances(settingnr, l, Dict) for l in self.lam.keys()}
 
 
 def _GSI(self, settingnr, lam, Dict):  # helpfunction for get_GSI
-    setting = self.getSetting(settingnr)
+    setting = self.getSetting(settingnr, lam)
     if setting.basis.startswith("chui"):
         variances = np.square(
-            self.getFc(settingnr)[lam].norms(Dict=False, m=int(setting.basis[-1]))
+            self.getFc(settingnr, lam)[lam].norms(Dict=False, m=int(setting.basis[-1]))
         )
     else:
-        variances = np.square(self.getFc(settingnr)[lam].norms())
+        variances = np.square(self.getFc(settingnr, lam)[lam].norms())
 
     variances = variances[1:]
     variance_f = sum(variances)
 
     if Dict:
         if setting.basis.startswith("chui"):
-            variances = self.getFc(settingnr)[lam].norms(
+            variances = self.getFc(settingnr, lam)[lam].norms(
                 Dict=True, m=int(setting.basis[-1])
             )
         else:
-            variances = self.getFc(settingnr)[lam].norms(Dict=True)
+            variances = self.getFc(settingnr, lam)[lam].norms(Dict=True)
         return {u: (variances[u] ** 2) / variance_f for u in list(variances)}
 
     else:
@@ -78,9 +75,7 @@ def get_GSI(self, settingnr=None, lam=None, Dict=False):
     ):  # get_GSI(a::approx, λ::Float64; dict::Bool = false,)::Union{Vector{Float64},Dict{Vector{Int},Float64}}
         return self._GSI(settingnr, lam, Dict)
     else:  # get_GSI( a::approx; dict::Bool = false )::Dict{Float64,Union{Vector{Float64},Dict{Vector{Int},Float64}}}
-        return {
-            l: self._GSI(settingnr, l, Dict) for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._GSI(settingnr, l, Dict) for l in self.lam.keys()}
 
 
 def _AttributeRanking(self, settingnr, lam):  # helpfunction for get_AttributeRanking
@@ -120,17 +115,14 @@ def get_AttributeRanking(self, settingnr=None, lam=None):
     if (
         lam is None
     ):  # get_AttributeRanking( a::approx, λ::Float64 )::Dict{Float64,Vector{Float64}}
-        return {
-            l: self._AttributeRanking(settingnr, l)
-            for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._AttributeRanking(settingnr, l) for l in self.lam.keys()}
     else:  # get_AttributeRanking( a::approx, λ::Float64 )::Vector{Float64}
         return self._AttributeRanking(settingnr, lam)
 
 
 def _ActiveSet(self, eps, settingnr, lam):  # helpfunction for get_ActiveSet
 
-    U = self.getSetting(settingnr).U[1:]
+    U = self.getSetting(settingnr, lam).U[1:]
     lengths = [len(u) for u in U]
     ds = max(lengths)
 
@@ -162,10 +154,7 @@ def get_ActiveSet(self, eps, settingnr=None, lam=None):
     if (
         lam is None
     ):  # get_ActiveSet(a::approx, eps::Vector{Float64})::Dict{Float64,Vector{Vector{Int}}}
-        return {
-            l: self._ActiveSet(eps, settingnr, l)
-            for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._ActiveSet(eps, settingnr, l) for l in self.lam.keys()}
     else:  # get_ActiveSet(a::approx, eps::Vector{Float64}, λ::Float64)::Vector{Vector{Int}}
         return self._ActiveSet(eps, settingnr, lam)
 
@@ -190,9 +179,7 @@ def get_ShapleyValues(self, settingnr=None, lam=None):
     This function returns the Shapley values of the approximation for all reg. parameters ``\lambda``, if lam == None, as a dictionary of vectors of length `a.d`. Otherwise for the provided lam as a vector of length `a.d`.
     """
     if lam is None:  # get_ShapleyValues(a::approx)::Dict{Float64,Vector{Float64}}
-        return {
-            l: self._ShapleyValues(settingnr, l) for l in self.getSetting(settingnr).lam
-        }
+        return {l: self._ShapleyValues(settingnr, l) for l in self.lam.keys()}
     else:  # get_ShapleyValues(a::approx, λ::Float64)::Vector{Float64}
         return self._ShapleyValues(settingnr, lam)
 
