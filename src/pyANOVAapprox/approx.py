@@ -1,4 +1,5 @@
 import copy
+import warnings
 
 import pyANOVAapprox.analysis as ANOVAanalysis
 import pyANOVAapprox.bandwidth as ANOVAbandwidth
@@ -185,6 +186,12 @@ class approx:
         ds=None,
         lam={0.0},
     ):
+    
+        if type(lam) is np.ndarray:
+            lam = {float(i) for i in lam}
+        if type(lam) is list:
+            lam = set(lam)
+
 
         self.X = X
 
@@ -222,6 +229,9 @@ class approx:
         self.trafo = [None]
         self.fc = [{}]
         self.aktsetting = 0
+        self.lam = {}
+        for i in lam:
+            self.lam[i] = [0]
 
         if setting.N is not None:
             self.addTrafo()
@@ -233,17 +243,24 @@ class approx:
         self.trafo.append(None)
         self.fc.append({})
 
-    def getSettingNr(self, settingnr=None):
-        return self.aktsetting if settingnr is None else settingnr
+    def getSettingNr(self, settingnr=None, lam = None, warn = True):
+        if lam is None:
+            return self.aktsetting if settingnr is None else settingnr
+        else:
+            if lam in self.lam.keys():
+                return self.lam[lam][-1] if settingnr is None else settingnr
+            else:
+                warnings.warn("Not yet approximated for this lambda")
+                return self.aktsetting if settingnr is None else settingnr
 
-    def getSetting(self, settingnr=None):
-        return self.setting[self.getSettingNr(settingnr)]
+    def getSetting(self, settingnr=None, lam = None):
+        return self.setting[self.getSettingNr(settingnr, lam)]
 
-    def getTrafo(self, settingnr=None):
-        return self.trafo[self.getSettingNr(settingnr)]
+    def getTrafo(self, settingnr=None, lam = None):
+        return self.trafo[self.getSettingNr(settingnr, lam)]
 
-    def getFc(self, settingnr=None):
-        return self.fc[self.getSettingNr(settingnr)]
+    def getFc(self, settingnr=None, lam = None):
+        return self.fc[self.getSettingNr(settingnr, lam)]
 
     def addTrafo(self, settingnr=None):
         setting = self.getSetting(settingnr)
@@ -356,10 +373,11 @@ class approx:
         If lam is a np.ndarray of dtype float, this function computes the approximation for the regularization parameters contained in lam.
         If lam is a float, this function computes the approximation for the regularization parameter lam.
         """
+        
         setting = self.getSetting(settingnr)
-
+        
         if lam is None:
-            lam = setting.lam
+            lam = setting.lam      
         else:
             if isinstance(lam, np.ndarray):
                 lam = {float(l) for l in lam}
@@ -393,6 +411,7 @@ class approx:
         solver_verbose,
         solver_tol,
     ):
+        settingnrs = []
         setting = self.getSetting(settingnr)
 
         n = len(self.y)
@@ -405,9 +424,10 @@ class approx:
         if verbosity > 3:
             if not os.path.exists("log"):
                 os.mkdir("log")
-            with open("log/log.csv", "w", newline="") as csvfile:
-                csv.writer(csvfile, delimiter=",").writerow(["it"] + setting.U)
-
+            with open('log/log.csv', 'w', newline='') as csvfile:
+                csv.writer(csvfile, delimiter=',').writerow(["it"] + setting.U)
+        if verbosity>2:
+            print("B =", B)
         for idx in range(maxiter):
             if verbosity > 0:
                 print("===== Iteration ", str(idx + 1), " =====")
@@ -415,6 +435,7 @@ class approx:
             if setting.N is not None:
                 self.addSetting(setting)
                 settingnr = self.aktsetting
+                settingnrs = settingnrs + [settingnr]
                 setting = self.getSetting(settingnr)
 
             setting.N = [bw[i] for i in setting.U]
@@ -461,15 +482,14 @@ class approx:
                 #    str(t),
                 # )
             if verbosity > 3:
-                with open("log/log.csv", "a", newline="") as csvfile:
-                    wr = csv.writer(csvfile, delimiter=",")
-                    wr.writerow(
-                        ["D in it" + str(idx + 1)] + [str(D[i]) for i in setting.U]
-                    )
-                    wr.writerow(
-                        ["t in it" + str(idx + 1)] + [str(t[i]) for i in setting.U]
-                    )
-        return D, t
+                with open('log/log.csv', 'a', newline='') as csvfile:
+                    wr = csv.writer(csvfile, delimiter=',')
+                    wr.writerow(["D in it"+str(idx+1)] + [str(D[i]) for i in setting.U])
+                    wr.writerow(["t in it"+str(idx+1)] + [str(t[i]) for i in setting.U])
+
+            if all([math.isnan(j) for j in sum([D[i] for i in D],[])]) and all([math.isnan(j) for j in sum([t[i] for i in D],[])]):
+                break
+        return settingnrs
 
     def autoapproximate(
         self,
@@ -484,18 +504,21 @@ class approx:
         solver_verbose=False,
         solver_tol=1e-8,
     ):
+        settingnr = self.getSettingNr(settingnr)
         setting = self.getSetting(settingnr)
 
         if lam is None:
             lam = setting.lam
         else:
+            if isinstance(lam, np.ndarray):
+                lam = {float(l) for l in lam}
             if not isinstance(lam, set):
                 lam = {lam}
             setting.lam = lam
 
-        if len(lam) == 1:
-            return self._autoapproximate(
-                lam.pop(),
+        for l in lam:
+            settingnrs = self._autoapproximate(
+                l,
                 settingnr=settingnr,
                 B=B,
                 maxiter=maxiter,
@@ -506,22 +529,8 @@ class approx:
                 solver_verbose=solver_verbose,
                 solver_tol=solver_tol,
             )
-        else:
-            return {
-                l: self._autoapproximate(
-                    l,
-                    settingnr=settingnr,
-                    B=B,
-                    maxiter=maxiter,
-                    solver=solver,
-                    verbosity=verbosity,
-                    solver_max_iter=solver_max_iter,
-                    solver_weights=solver_weights,
-                    solver_verbose=solver_verbose,
-                    solver_tol=solver_tol,
-                )
-                for l in lam
-            }
+            self.lam[l] = self.lam[l] + settingnrs
+
 
     def evaluate(self, settingnr=None, lam=None, X=None):
         """
@@ -532,7 +541,7 @@ class approx:
         - If only lam is given: evaluate at self.X for specific lam.
         - If neither are given: evaluate at self.X for all lam.
         """
-        setting = self.getSetting(settingnr)
+        setting = self.getSetting(settingnr, lam)
 
         if X is not None:
             if setting.basis == "per" and (np.min(X) < -0.5 or np.max(X) >= 0.5):
@@ -550,14 +559,14 @@ class approx:
                 basis_vect=setting.basis_vect,
             )
         else:
-            trafo = self.getTrafo(settingnr)
+            trafo = self.getTrafo(settingnr, lam)
 
         if (
             lam is not None
         ):  # evaluate( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Vector{ComplexF64},Vector{Float64}}
-            return trafo @ self.getFc(settingnr)[lam]
+            return trafo @ self.getFc(settingnr, lam)[lam]
         else:  # evaluate( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Vector{ComplexF64},Vector{Float64}}}
-            return {λ: trafo @ self.getFc(settingnr)[λ] for λ in setting.lam}
+            return {λ: trafo @ self.getFc(settingnr, lam)[λ] for λ in self.lam.keys()}
 
     def evaluateANOVAterms(self, settingnr=None, X=None, lam=None):
         """
@@ -566,7 +575,7 @@ class approx:
         - If lam is given: evaluate at X for specific lam.
         - If lam is not given: evaluate at X for all lam.
         """
-        setting = self.getSetting(settingnr)
+        setting = self.getSetting(settingnr, lam)
         if X is None:
             X = self.X
 
@@ -598,14 +607,14 @@ class approx:
             lam is not None
         ):  # evaluateANOVAterms( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Matrix{ComplexF64},Matrix{Float64}}
             for j, u in enumerate(setting.U):
-                values[:, j] = trafo[u] @ self.getFc(settingnr)[lam][u]
+                values[:, j] = trafo[u] @ self.getFc(settingnr, lam)[lam][u]
             return values
         else:  # evaluateANOVAterms( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Matrix{ComplexF64},Matrix{Float64}}}
             results = {}
-            for λ in setting.lam:
+            for λ in self.lam.keys():
                 vals = np.zeros_like(values)
                 for j, u in enumerate(setting.U):
-                    vals[:, j] = trafo[u] @ self.getFc(settingnr)[λ][u]
+                    vals[:, j] = trafo[u] @ self.getFc(settingnr, lam)[λ][u]
                 results[λ] = vals
             return results
 
@@ -616,7 +625,7 @@ class approx:
         - If lam is given: evaluate at X for specific lam.
         - If lam is not given: evaluate at X for all lam.
         """
-        setting = self.getSetting(settingnr)
+        setting = self.getSetting(settingnr, lam)
 
         if X is None:
             X = self.X
@@ -646,7 +655,7 @@ class approx:
 
         else:  # evaluateSHAPterms( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Matrix{ComplexF64},Matrix{Float64}}}
             results = {}
-            for l in setting.lam:
+            for l in self.lam.keys():
                 terms = self.evaluateANOVAterms(X, l)
 
                 Dtype = np.complex128 if setting.basis == "per" else np.float64
