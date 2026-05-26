@@ -37,10 +37,7 @@ def get_variances(self, settingnr=None, lam=None, Dict=False):
     elif (
         lam == None
     ):  # get_variances( a::approx; dict::Bool = false )::Dict{Float64,Union{Vector{Float64},Dict{Vector{Int},Float64}}}
-        return {
-            l: self._variances(settingnr, l, Dict)
-            for l in self.lam.keys()
-        }
+        return {l: self._variances(settingnr, l, Dict) for l in self.lam.keys()}
 
 
 def _GSI(self, settingnr, lam, Dict):  # helpfunction for get_GSI
@@ -78,9 +75,7 @@ def get_GSI(self, settingnr=None, lam=None, Dict=False):
     ):  # get_GSI(a::approx, λ::Float64; dict::Bool = false,)::Union{Vector{Float64},Dict{Vector{Int},Float64}}
         return self._GSI(settingnr, lam, Dict)
     else:  # get_GSI( a::approx; dict::Bool = false )::Dict{Float64,Union{Vector{Float64},Dict{Vector{Int},Float64}}}
-        return {
-            l: self._GSI(settingnr, l, Dict) for l in self.lam.keys()
-        }
+        return {l: self._GSI(settingnr, l, Dict) for l in self.lam.keys()}
 
 
 def _AttributeRanking(self, settingnr, lam):  # helpfunction for get_AttributeRanking
@@ -120,10 +115,7 @@ def get_AttributeRanking(self, settingnr=None, lam=None):
     if (
         lam is None
     ):  # get_AttributeRanking( a::approx, λ::Float64 )::Dict{Float64,Vector{Float64}}
-        return {
-            l: self._AttributeRanking(settingnr, l)
-            for l in self.lam.keys()
-        }
+        return {l: self._AttributeRanking(settingnr, l) for l in self.lam.keys()}
     else:  # get_AttributeRanking( a::approx, λ::Float64 )::Vector{Float64}
         return self._AttributeRanking(settingnr, lam)
 
@@ -162,10 +154,7 @@ def get_ActiveSet(self, eps, settingnr=None, lam=None):
     if (
         lam is None
     ):  # get_ActiveSet(a::approx, eps::Vector{Float64})::Dict{Float64,Vector{Vector{Int}}}
-        return {
-            l: self._ActiveSet(eps, settingnr, l)
-            for l in self.lam.keys()
-        }
+        return {l: self._ActiveSet(eps, settingnr, l) for l in self.lam.keys()}
     else:  # get_ActiveSet(a::approx, eps::Vector{Float64}, λ::Float64)::Vector{Vector{Int}}
         return self._ActiveSet(eps, settingnr, lam)
 
@@ -190,9 +179,7 @@ def get_ShapleyValues(self, settingnr=None, lam=None):
     This function returns the Shapley values of the approximation for all reg. parameters ``\lambda``, if lam == None, as a dictionary of vectors of length `a.d`. Otherwise for the provided lam as a vector of length `a.d`.
     """
     if lam is None:  # get_ShapleyValues(a::approx)::Dict{Float64,Vector{Float64}}
-        return {
-            l: self._ShapleyValues(settingnr, l) for l in self.lam.keys()
-        }
+        return {l: self._ShapleyValues(settingnr, l) for l in self.lam.keys()}
     else:  # get_ShapleyValues(a::approx, λ::Float64)::Vector{Float64}
         return self._ShapleyValues(settingnr, lam)
 
