@@ -1,5 +1,11 @@
 name: Format Python Code
-on: push
+
+on:
+  push:
+    branches:
+      - '**'        # Läuft bei jedem Push auf absolut jeden Branch...
+    tags-ignore:
+      - '**'        # ...ABER ignoriert jeden Push, der ein Tag (Release) ist.
 
 jobs:
   python-code-format:
