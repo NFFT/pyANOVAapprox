@@ -74,7 +74,10 @@ anova_model = ANOVAapprox.approx(X, y, ds=q, basis=basis, N=N)
 
 ####  Do approximation by least-squares ###
 anova_model.approximate(lam=lambdas, solver="lsqr")
-print("Total number of used parameters = " + str(len(anova_model.getFc()[lambdas[0]].vec())))
+print(
+    "Total number of used parameters = "
+    + str(len(anova_model.getFc()[lambdas[0]].vec()))
+)
 
 #######################
 ## Analyze the model ##
@@ -82,7 +85,7 @@ print("Total number of used parameters = " + str(len(anova_model.getFc()[lambdas
 
 ### Do sensitivity analysis ####
 gsis = anova_model.get_GSI(
-  lam=0.0
+    lam=0.0
 )  # calculates indices for importance of terms (gsis is vector, with indices belonging to terms in anova_model.getSetting().U)
 anova_model.get_GSI(lam=0.0, Dict=True)
 
@@ -128,7 +131,10 @@ anova_model = anova_model.approx(
     X=X, y=y, U=U, N=[i + 2 for i in N], basis=basis
 )  # increase number of paramers in N for the important terms
 anova_model.approximate(lam=lambdas)
-print("Total number of used parameters = " + str(len(anova_model.getFc()[lambdas[0]].vec())))
+print(
+    "Total number of used parameters = "
+    + str(len(anova_model.getFc()[lambdas[0]].vec()))
+)
 mse_train = anova_model.get_mse(lam=0.0)
 mse_test = anova_model.get_mse(X=X_test, y=y_test, lam=0.0)
 print("MSE on test points after ANOVA truncation: " + str(mse_test))
