@@ -16,6 +16,5 @@ documentation for details.
    :caption: Contents:
 
    Analysis
-   Approximation
+   modules
    Errors
-
