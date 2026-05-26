@@ -186,12 +186,11 @@ class approx:
         ds=None,
         lam={0.0},
     ):
-    
+
         if type(lam) is np.ndarray:
             lam = {float(i) for i in lam}
         if type(lam) is list:
             lam = set(lam)
-
 
         self.X = X
 
@@ -243,7 +242,7 @@ class approx:
         self.trafo.append(None)
         self.fc.append({})
 
-    def getSettingNr(self, settingnr=None, lam = None, warn = True):
+    def getSettingNr(self, settingnr=None, lam=None, warn=True):
         if lam is None:
             return self.aktsetting if settingnr is None else settingnr
         else:
@@ -253,13 +252,13 @@ class approx:
                 warnings.warn("Not yet approximated for this lambda")
                 return self.aktsetting if settingnr is None else settingnr
 
-    def getSetting(self, settingnr=None, lam = None):
+    def getSetting(self, settingnr=None, lam=None):
         return self.setting[self.getSettingNr(settingnr, lam)]
 
-    def getTrafo(self, settingnr=None, lam = None):
+    def getTrafo(self, settingnr=None, lam=None):
         return self.trafo[self.getSettingNr(settingnr, lam)]
 
-    def getFc(self, settingnr=None, lam = None):
+    def getFc(self, settingnr=None, lam=None):
         return self.fc[self.getSettingNr(settingnr, lam)]
 
     def addTrafo(self, settingnr=None):
@@ -373,11 +372,11 @@ class approx:
         If lam is a np.ndarray of dtype float, this function computes the approximation for the regularization parameters contained in lam.
         If lam is a float, this function computes the approximation for the regularization parameter lam.
         """
-        
+
         setting = self.getSetting(settingnr)
-        
+
         if lam is None:
-            lam = setting.lam      
+            lam = setting.lam
         else:
             if isinstance(lam, np.ndarray):
                 lam = {float(l) for l in lam}
@@ -424,9 +423,9 @@ class approx:
         if verbosity > 3:
             if not os.path.exists("log"):
                 os.mkdir("log")
-            with open('log/log.csv', 'w', newline='') as csvfile:
-                csv.writer(csvfile, delimiter=',').writerow(["it"] + setting.U)
-        if verbosity>2:
+            with open("log/log.csv", "w", newline="") as csvfile:
+                csv.writer(csvfile, delimiter=",").writerow(["it"] + setting.U)
+        if verbosity > 2:
             print("B =", B)
         for idx in range(maxiter):
             if verbosity > 0:
@@ -482,12 +481,18 @@ class approx:
                 #    str(t),
                 # )
             if verbosity > 3:
-                with open('log/log.csv', 'a', newline='') as csvfile:
-                    wr = csv.writer(csvfile, delimiter=',')
-                    wr.writerow(["D in it"+str(idx+1)] + [str(D[i]) for i in setting.U])
-                    wr.writerow(["t in it"+str(idx+1)] + [str(t[i]) for i in setting.U])
+                with open("log/log.csv", "a", newline="") as csvfile:
+                    wr = csv.writer(csvfile, delimiter=",")
+                    wr.writerow(
+                        ["D in it" + str(idx + 1)] + [str(D[i]) for i in setting.U]
+                    )
+                    wr.writerow(
+                        ["t in it" + str(idx + 1)] + [str(t[i]) for i in setting.U]
+                    )
 
-            if all([math.isnan(j) for j in sum([D[i] for i in D],[])]) and all([math.isnan(j) for j in sum([t[i] for i in D],[])]):
+            if all([math.isnan(j) for j in sum([D[i] for i in D], [])]) and all(
+                [math.isnan(j) for j in sum([t[i] for i in D], [])]
+            ):
                 break
         return settingnrs
 
@@ -530,7 +535,6 @@ class approx:
                 solver_tol=solver_tol,
             )
             self.lam[l] = self.lam[l] + settingnrs
-
 
     def evaluate(self, settingnr=None, lam=None, X=None):
         """

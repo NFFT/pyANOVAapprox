@@ -32,7 +32,7 @@ def getaxissum(ghat, u, j, system):
     # fcuj = np.concatenate(fcuj[math.ceil(bws[j]/2):] + [fcuj[0]]) + fcuj[math.ceil(bws[j]/2)-1::-1]
 
     fcuj = np.cumsum(fcuj[::-1])[::-1]
-    
+
     return fcuj
 
 
@@ -63,6 +63,7 @@ def compute_bandwidth(B, D, t):
         for u in us:
             total += fun_lmbda_u(math.exp(lmbda), u)
         return total - B
+
     lmbda = math.exp(bisect(lambda t: fun_lmbda(t, B), -100, 100))
 
     for u in us:
@@ -191,8 +192,15 @@ def estimate_rates(self, lam, settingnr=None, verbosity=0):
             time = ""
             if verbosity > 8:
                 from datetime import datetime
+
                 time = str(round(datetime.timestamp(datetime.now())))
-            fig.savefig(os.path.join("log","figures", time + "_" + str(num).strip() + "_rates_" + str(u).strip() + ".png"))
+            fig.savefig(
+                os.path.join(
+                    "log",
+                    "figures",
+                    time + "_" + str(num).strip() + "_rates_" + str(u).strip() + ".png",
+                )
+            )
             num = num + 1
             plt.close(fig)
 
