@@ -31,8 +31,6 @@ def getaxissum(ghat, u, j, system):
         raise ValueError("For this basis is estimate rates not implemented")
     # fcuj = np.concatenate(fcuj[math.ceil(bws[j]/2):] + [fcuj[0]]) + fcuj[math.ceil(bws[j]/2)-1::-1]
 
-    fcuj = np.cumsum(fcuj[::-1])[::-1]
-
     return fcuj
 
 
@@ -162,8 +160,8 @@ def estimate_rates(self, lam, settingnr=None, verbosity=0):
 
                 y = np.cumsum(axissum[::-1])[::-1]
                 ax.plot(
-                    axissumnum,
-                    axissum,
+                    range(1, len(y) + 1),
+                    y,
                     label=u[j],
                     marker="o",
                     #                    color=j
