@@ -171,7 +171,7 @@ def estimate_rates(self, lam, settingnr=None, verbosity=0):
                 t[u][j] = math.nan
             else:
                 idx = min(len(axissum), len(axissum) - idx + 2)
-                                Duj, tuj = fitrate_log((np.cumsum(axissum)[::-1])[0:idx])
+                Duj, tuj = fitrate_log((np.cumsum(axissum)[::-1])[0:idx])
                 
                 if tuj < 0.004:
                     D[u][j] = math.nan
