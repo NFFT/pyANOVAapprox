@@ -419,6 +419,8 @@ class approx:
 
         D = dict([(u, tuple([1.0] * len(u))) for u in setting.U])
         t = dict([(u, tuple([1.0] * len(u))) for u in setting.U])
+        fix = dict([(u, tuple([False] * len(u))) for u in setting.U])
+        bw =  [tuple([0] * len(u)) for u in setting.U]
 
         if verbosity > 3:
             if not os.path.exists("log"):
@@ -430,7 +432,7 @@ class approx:
         for idx in range(maxiter):
             if verbosity > 0:
                 print("===== Iteration ", str(idx + 1), " =====")
-            bw = compute_bandwidth(B, D, t)
+            bw, fix = compute_bandwidth(B, D, t, fix, bw)
             if setting.N is not None:
                 self.addSetting(setting)
                 settingnr = self.aktsetting

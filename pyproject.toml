@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyANOVAapprox"
-version = "2.0.6"
+version = "2.0.7"
 authors = [
   { name="Felix Wirth", email="fwi012001@gmail.com" },
 ]
