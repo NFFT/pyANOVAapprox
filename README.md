@@ -53,4 +53,4 @@ Requirements
 - pyGroupedTransforms 0.1.0 or greater
 - NumPy 2.0.0 or greater
 - SciPy 1.16.0 or greater
-- Matplotlib 3.5 or greater
+- Matplotlib 3.5 or greater 
