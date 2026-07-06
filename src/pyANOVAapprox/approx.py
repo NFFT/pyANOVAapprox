@@ -84,7 +84,7 @@ class approx_setting:
         basis="cos",
         classification=False,
         basis_vect=[],
-        fastmult=None,
+        algorithm="direct",
         parallel=True,
         ds=None,
         lam={0.0},
@@ -95,12 +95,12 @@ class approx_setting:
 
         if (
             U == None or len(U) == 0
-        ):  # setting U   #approx(X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, ds::Int, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
+        ):  # setting U   #approx(X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, ds::Int, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), algorithm::String = classification ? true : false,)
             U = get_superposition_set(parent.X.shape[1], ds)
 
         if N is not None and not isinstance(
             N[0], tuple
-        ):  # setting N    #approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, U::Vector{Vector{Int}}, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), fastmult::Bool = classification ? true : false,)
+        ):  # setting N    #approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, U::Vector{Vector{Int}}, N::Vector{Int}, basis::String = "cos"; classification::Bool = false, basis_vect::Vector{String} = Vector{String}([]), algorithm::String = classification ? true : false,)
             ds = max(len(u) for u in U)
 
             if len(N) != len(U) and len(N) != ds:
@@ -126,8 +126,10 @@ class approx_setting:
 
         if basis_vect is None:
             basis_vect = []
-        if fastmult is None:
-            fastmult = False if classification else True
+        if algorithm == "direct":
+            algorithm = "direct" if classification else "nfft"
+        if algorithm != "nfft":
+            parallel = False
         if basis not in bases:
             raise ValueError("Basis not found.")
         # if y[0].dtype != vtypes[basis]:
@@ -146,7 +148,7 @@ class approx_setting:
         self.N = N
         self.classification = classification
         self.basis_vect = basis_vect
-        self.fastmult = fastmult
+        self.algorithm = algorithm
         self.parallel = parallel
         self.lam = lam
         self.parent = parent
@@ -181,7 +183,7 @@ class approx:
         basis="cos",
         classification=False,
         basis_vect=[],
-        fastmult=None,
+        algorithm="direct",
         parallel=True,
         ds=None,
         lam={0.0},
@@ -204,7 +206,7 @@ class approx:
             basis=basis,
             classification=classification,
             basis_vect=basis_vect,
-            fastmult=fastmult,
+            algorithm=algorithm,
             parallel=parallel,
             ds=ds,
             lam=lam,
@@ -270,7 +272,7 @@ class approx:
             U=setting.U,
             N=setting.N,
             X=transformX(self.X, setting.basis),
-            fastmult=setting.fastmult,
+            algorithm=setting.algorithm,
             parallel=setting.parallel,
             basis_vect=setting.basis_vect,
         )
