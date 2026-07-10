@@ -11,7 +11,7 @@ authors = [
 maintainers = [
   { name="Felix Bartel" },
   { name="Franziska Nestler" },
-  { name="Laura Weidensager" }
+  { name="Laura Weidensager" },
   { name="Felix Wirth" },
 ]
 description = "Approximation Package for High-Dimensional Functions"
