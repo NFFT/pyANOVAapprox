@@ -49,13 +49,12 @@ def get_variances(self, settingnr=None, lam=None, Dict=False):
 
     Args:
         self: The approximation object.
-        settingnr (int, optional): Index of the approximation setting to use.
+        settingnr (int, optional): Defaults to ``None``. Index of the approximation setting to use.
             Defaults to the only setting if just one is present.
-        lam (float, optional): Regularization parameter. If omitted, the
+        lam (float, optional): Defaults to ``None``. Regularization parameter. If omitted, the
             variances are computed for every available :math:`\lambda`.
-        Dict (bool): If ``True``, return the variances as a dictionary indexed
+        Dict (bool, optional): Defaults to ``False``. If ``True``, return the variances as a dictionary indexed
             by ANOVA terms. Otherwise return them as an array.
-            Defaults to ``False``.
 
     Returns:
         dict or numpy.ndarray: Variances of the ANOVA terms for the requested
@@ -106,12 +105,11 @@ def get_GSI(self, settingnr=None, lam=None, Dict=False):
 
     Args:
         self: The approximation object.
-        settingnr (int, optional): Index of the approximation setting to use.
-        lam (float, optional): Regularization parameter. If omitted, the GSIs
+        settingnr (int, optional): Defaults to ``None``. Index of the approximation setting to use.
+        lam (float, optional): Defaults to ``None``. Regularization parameter. If omitted, the GSIs
             are computed for every available :math:`\lambda`.
-        Dict (bool): If ``True``, return the indices as a dictionary indexed by
-            ANOVA terms. Otherwise return them as an array. Defaults to
-            ``False``.
+        Dict (bool, optional): Defaults to ``False``. If ``True``, return the indices as a dictionary indexed by
+            ANOVA terms. Otherwise return them as an array.
 
     Returns:
         dict or numpy.ndarray: Global Sensitivity Indices of the ANOVA terms
@@ -166,8 +164,8 @@ def get_AttributeRanking(self, settingnr=None, lam=None):
 
     Args:
         self: The approximation object.
-        settingnr (int, optional): Index of the approximation setting to use.
-        lam (float, optional): Regularization parameter. If omitted, the
+        settingnr (int, optional): Defaults to ``None``. Index of the approximation setting to use.
+        lam (float, optional): Defaults to ``None``. Regularization parameter. If omitted, the
             ranking is computed for every available :math:`\lambda`.
 
     Returns:
@@ -222,9 +220,9 @@ def get_ActiveSet(self, eps, settingnr=None, lam=None):
 
     Args:
         self: The approximation object.
-        eps (numpy.ndarray): Thresholds, one per interaction order. Its length
+        eps (numpy.ndarray): Defaults to ``None``. Thresholds, one per interaction order. Its length
             must equal the maximum interaction order ``ds`` of the setting.
-        settingnr (int, optional): Index of the approximation setting to use.
+        settingnr (int, optional): Defaults to ``None``. Index of the approximation setting to use.
         lam (float, optional): Regularization parameter. If omitted, the active
             set is computed for every available :math:`\lambda`.
 
@@ -269,8 +267,8 @@ def get_ShapleyValues(self, settingnr=None, lam=None):
 
     Args:
         self: The approximation object.
-        settingnr (int, optional): Index of the approximation setting to use.
-        lam (float, optional): Regularization parameter. If omitted, the
+        settingnr (int, optional): Defaults to ``None``. Index of the approximation setting to use.
+        lam (float, optional): Defaults to ``None``. Regularization parameter. If omitted, the
             Shapley values are computed for every available :math:`\lambda`.
 
     Returns:

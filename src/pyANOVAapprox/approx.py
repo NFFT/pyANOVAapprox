@@ -895,18 +895,3 @@ class approx:
     get_ActiveSet = ANOVAanalysis.get_ActiveSet
     _ShapleyValues = ANOVAanalysis._ShapleyValues
     get_ShapleyValues = ANOVAanalysis.get_ShapleyValues
-    
-class test_class:
-    r"""This is a test class to exploro the working of this doc
-
-    Args:
-        docs (string, optional): test for the doc auto
-        
-
-    Returns:
-        Null
-        
-    Raises:
-        ValueError: doc error
-    """
-        
