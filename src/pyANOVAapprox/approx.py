@@ -1,3 +1,15 @@
+"""Scattered data function approximation with an ANOVA decomposition.
+
+The central object is :py:class:`approx`, which holds the nodes, the function
+values and one or more :py:class:`approx_setting` objects describing the ANOVA
+decomposition and basis. Fitting is done with
+:py:meth:`approx.approximate`, evaluation with :py:meth:`approx.evaluate`.
+
+The analysis routines (variances, sensitivity indices, Shapley values) and the
+error measures are defined in :py:mod:`pyANOVAapprox.analysis` and
+:py:mod:`pyANOVAapprox.errors` and attached to :py:class:`approx` as methods.
+"""
+
 import copy
 import warnings
 
@@ -76,6 +88,35 @@ compute_bandwidth = ANOVAbandwidth.compute_bandwidth
 
 
 class approx_setting:
+    r"""One ANOVA decomposition and basis choice belonging to an :py:class:`approx`.
+
+    An :py:class:`approx` holds a list of these, so that several decompositions
+    can be fitted against the same nodes and function values. Settings are
+    normally created for you by :py:class:`approx`; you rarely construct one
+    directly.
+
+    Attributes:
+        basis (str): Basis of the function space. See :py:class:`approx` for
+            the list of supported values.
+        U (list[tuple[int]]): Subsets of coordinate indices making up the
+            ANOVA decomposition.
+        N (list[numpy.ndarray]): Bandwidths, one array per ANOVA term.
+        classification (bool): Whether the setting describes a classification
+            rather than a regression problem.
+        basis_vect (list[str]): Per-dimension basis choice, used by the
+            ``"mixed"`` basis.
+        algorithm (str): ``"nfft"`` or ``"direct"``.
+        device: Device passed through to the grouped transform.
+        parallel (bool): Whether sub-transforms run threaded. Forced to
+            ``False`` for any algorithm other than ``"nfft"``.
+        lam (set[float]): Regularization parameters associated with the setting.
+        parent (approx): The approximation this setting belongs to.
+
+    Raises:
+        ValueError: If ``basis`` is not a supported basis, or if ``N`` has
+            neither ``|U|`` nor ``max |u|`` entries.
+    """
+
     def __init__(
         self,
         parent,
@@ -85,6 +126,7 @@ class approx_setting:
         classification=False,
         basis_vect=[],
         algorithm="direct",
+        device=None,
         parallel=True,
         ds=None,
         lam={0.0},
@@ -149,31 +191,86 @@ class approx_setting:
         self.classification = classification
         self.basis_vect = basis_vect
         self.algorithm = algorithm
+        self.device = device
         self.parallel = parallel
         self.lam = lam
         self.parent = parent
 
 
-### approx:
-# A struct to hold the scattered data function approximation.
-
-## Fields
-# * `basis::String` - basis of the function space; currently choice of `"per"` (exponential functions), `"cos"` (cosine functions), `"cheb"` (Chebyshev basis),`"std"`(transformed exponential functions), `"chui1"` (Haar wavelets), `"chui2"` (Chui-Wang wavelets of order 2),`"chui3"`  (Chui-Wang wavelets of order 3) ,`"chui4"` (Chui-Wang wavelets of order 4)
-# * `X::Matrix{Float64}` - scattered data nodes with d rows and M columns
-# * `y::Union{Vector{ComplexF64},Vector{Float64}}` - M function values (complex for `basis = "per"`, real ortherwise)
-# * `U::Vector{Vector{Int}}` - a vector containing susbets of coordinate indices
-# * `N::Vector{Int}` - bandwdiths for each ANOVA term
-# * `trafo::GroupedTransform` - holds the grouped transformation
-# * `fc::Dict{Float64,GroupedCoefficients}` - holds the GroupedCoefficients after approximation for every different regularization parameters
-
-## Constructor
-#    approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, U::Vector{Vector{Int}}, N::Vector{Int}, basis::String = "cos" )
-
-## Additional Constructor
-#    approx( X::Matrix{Float64}, y::Union{Vector{ComplexF64},Vector{Float64}}, ds::Int, N::Vector{Int}, basis::String = "cos" )
-
-
 class approx:
+    r"""A scattered data function approximation.
+
+    Holds an approximation built from scattered data nodes, function values, an
+    ANOVA decomposition and a choice of basis functions. Several bases and
+    several regularization parameters are supported.
+
+    The ANOVA decomposition can be given **explicitly**, by passing the subsets
+    ``U`` and the bandwidths ``N``::
+
+        a = approx(X, y, U=U, N=N, basis="cos")
+
+    or **automatically**, by passing the maximum interaction order ``ds``, in
+    which case ``U`` is generated as the superposition set of order ``ds``::
+
+        a = approx(X, y, ds=2, N=N, basis="cos")
+
+    Args:
+        X (numpy.ndarray): Scattered data nodes, ``M`` rows and ``d`` columns.
+            The admissible range depends on ``basis``: ``[-0.5, 0.5)`` for
+            ``"per"`` and the ``"chui*"`` bases, ``[0, 1]`` for ``"cos"``, and
+            ``[-1, 1]`` for ``"cheb"``.
+        y (numpy.ndarray): ``M`` function values. Complex for ``basis="per"``,
+            real otherwise.
+        U (list[tuple[int]], optional): Subsets of coordinate indices defining
+            the ANOVA decomposition. If omitted or empty, it is generated from
+            ``ds``.
+        N (list, optional): Bandwidths. Either one entry per ANOVA term
+            (``|U|`` entries) or one per interaction order (``max |u|``
+            entries). If ``None``, no transform is set up and you will want
+            :py:meth:`autoapproximate`.
+        basis (str): Basis of the function space. One of
+
+            - ``"per"`` — periodic complex exponentials (Fourier basis)
+            - ``"cos"`` — cosine basis for non-periodic functions
+            - ``"cheb"`` — Chebyshev basis
+            - ``"std"`` — transformed exponential functions
+            - ``"chui1"`` — Haar wavelets
+            - ``"chui2"``, ``"chui3"``, ``"chui4"`` — Chui-Wang wavelets of
+              order 2, 3 and 4
+            - ``"mixed"`` — per-dimension basis, see ``basis_vect``
+
+            Defaults to ``"cos"``.
+        classification (bool): Fit a classification rather than a regression
+            problem. Defaults to ``False``.
+        basis_vect (list[str]): Per-dimension basis choice, required for
+            ``basis="mixed"``.
+        algorithm (str): ``"nfft"`` or ``"direct"``. Defaults to ``"direct"``,
+            which resolves to ``"nfft"`` unless ``classification`` is set.
+        device: Device passed through to the grouped transform.
+        parallel (bool): Run sub-transforms threaded. Defaults to ``True``;
+            ignored unless ``algorithm`` is ``"nfft"``.
+        ds (int, optional): Maximum interaction order, used to generate ``U``
+            when it is not given explicitly.
+        lam (set[float]): Regularization parameters. Defaults to ``{0.0}``.
+
+    Attributes:
+        X (numpy.ndarray): The scattered data nodes.
+        y (numpy.ndarray): The function values.
+        setting (list[approx_setting]): The ANOVA decompositions attached to
+            this approximation.
+        trafo (list): The grouped transform belonging to each setting.
+        fc (list[dict]): Per setting, a dictionary mapping each regularization
+            parameter to the :py:class:`GroupedCoefficients` obtained by
+            :py:meth:`approximate`.
+        aktsetting (int): Index of the currently active setting.
+        lam (dict[float, list[int]]): Maps each regularization parameter to the
+            settings that have been approximated for it.
+
+    Raises:
+        ValueError: If ``X`` and ``y`` have different lengths, or if the nodes
+            in ``X`` lie outside the range required by ``basis``.
+    """
+
     def __init__(
         self,
         X,
@@ -184,6 +281,7 @@ class approx:
         classification=False,
         basis_vect=[],
         algorithm="direct",
+        device=None,
         parallel=True,
         ds=None,
         lam={0.0},
@@ -207,6 +305,7 @@ class approx:
             classification=classification,
             basis_vect=basis_vect,
             algorithm=algorithm,
+            device=device,
             parallel=parallel,
             ds=ds,
             lam=lam,
@@ -273,6 +372,7 @@ class approx:
             N=setting.N,
             X=transformX(self.X, setting.basis),
             algorithm=setting.algorithm,
+            device=setting.device,
             parallel=setting.parallel,
             basis_vect=setting.basis_vect,
         )
@@ -370,9 +470,32 @@ class approx:
         solver=None,
         tol=1e-8,
     ):
-        """
-        If lam is a np.ndarray of dtype float, this function computes the approximation for the regularization parameters contained in lam.
-        If lam is a float, this function computes the approximation for the regularization parameter lam.
+        r"""Fit the approximation by solving a regularized least-squares problem.
+
+        The coefficients are stored on the object and can afterwards be used by
+        :py:meth:`evaluate` and the analysis routines.
+
+        Args:
+            lam (float or numpy.ndarray, optional): Regularization
+                parameter(s). A single ``float`` computes one approximation, an
+                array computes one per value. If omitted, the parameters
+                already stored on the setting are used.
+            settingnr (int, optional): Index of the setting to fit. Defaults to
+                the active setting.
+            max_iter (int): Maximum number of solver iterations. Defaults to 50.
+            weights (numpy.ndarray, optional): Weights for the regularization
+                term.
+            verbose (bool): Print solver progress. Defaults to ``False``.
+            solver (str, optional): Solver to use, e.g. ``"lsqr"`` or
+                ``"fista"``. If omitted, one is chosen from the setting.
+            tol (float): Solver tolerance. Defaults to ``1e-8``.
+
+        Returns:
+            None: The coefficients are stored in :py:attr:`fc`.
+
+        Raises:
+            ValueError: If the setting has no bandwidths ``N``. Use
+                :py:meth:`autoapproximate` in that case.
         """
 
         setting = self.getSetting(settingnr)
@@ -511,6 +634,36 @@ class approx:
         solver_verbose=False,
         solver_tol=1e-8,
     ):
+        r"""Fit the approximation, choosing the ANOVA decomposition automatically.
+
+        Alternates between fitting coefficients and pruning the ANOVA terms, so
+        that the decomposition and the bandwidths do not have to be known in
+        advance. Each iteration may add a new setting; the settings found for
+        each regularization parameter are recorded in :py:attr:`lam`.
+
+        Args:
+            lam (float or numpy.ndarray, optional): Regularization
+                parameter(s). If omitted, the parameters already stored on the
+                setting are used.
+            settingnr (int, optional): Index of the setting to start from.
+                Defaults to the active setting.
+            B (optional): Threshold controlling which ANOVA terms are retained
+                between iterations.
+            maxiter (int): Number of detection iterations. Defaults to 2.
+            solver (str): Solver used for the inner fits. Defaults to
+                ``"lsqr"``.
+            verbosity (int): Verbosity level of the detection loop. Defaults
+                to 0.
+            solver_max_iter (int): ``max_iter`` passed to the inner solver.
+                Defaults to 50.
+            solver_weights (numpy.ndarray, optional): ``weights`` passed to the
+                inner solver.
+            solver_verbose (bool): ``verbose`` passed to the inner solver.
+            solver_tol (float): ``tol`` passed to the inner solver.
+
+        Returns:
+            None: The coefficients are stored in :py:attr:`fc`.
+        """
         settingnr = self.getSettingNr(settingnr)
         setting = self.getSetting(settingnr)
 
@@ -539,13 +692,26 @@ class approx:
             self.lam[l] = self.lam[l] + settingnrs
 
     def evaluate(self, settingnr=None, lam=None, X=None):
-        """
-        This function evaluates the approximation with optional node matrix X and regularization lam.
+        r"""Evaluate the fitted approximation.
 
-        - If both X and lam are given: evaluate at X for specific lam.
-        - If only X is given: evaluate at X for all lam.
-        - If only lam is given: evaluate at self.X for specific lam.
-        - If neither are given: evaluate at self.X for all lam.
+        By default the approximation is evaluated at the nodes used during
+        construction. Optionally new evaluation points and a specific
+        regularization parameter can be given:
+
+        - both ``X`` and ``lam``: evaluate at ``X`` for that ``lam``
+        - only ``X``: evaluate at ``X`` for every ``lam``
+        - only ``lam``: evaluate at :py:attr:`X` for that ``lam``
+        - neither: evaluate at :py:attr:`X` for every ``lam``
+
+        Args:
+            settingnr (int, optional): Index of the setting to use.
+            lam (float, optional): Regularization parameter.
+            X (numpy.ndarray, optional): Evaluation nodes. Defaults to the
+                nodes the approximation was built from.
+
+        Returns:
+            numpy.ndarray or dict: The evaluated function values. If ``lam`` is
+            omitted, a dictionary mapping each :math:`\lambda` to its values.
         """
         setting = self.getSetting(settingnr, lam)
 
@@ -575,11 +741,26 @@ class approx:
             return {λ: trafo @ self.getFc(settingnr, lam)[λ] for λ in self.lam.keys()}
 
     def evaluateANOVAterms(self, settingnr=None, X=None, lam=None):
-        """
-        This function evaluates the single ANOVA terms of the approximation on the nodes of matrix X and regularization lam.
+        r"""Evaluate the contribution of each ANOVA term separately.
 
-        - If lam is given: evaluate at X for specific lam.
-        - If lam is not given: evaluate at X for all lam.
+        Instead of returning only the complete approximation, this returns the
+        value of every individual ANOVA component at the evaluation points.
+
+        Args:
+            settingnr (int, optional): Index of the setting to use.
+            X (numpy.ndarray, optional): Evaluation nodes. Defaults to the
+                nodes the approximation was built from.
+            lam (float, optional): Regularization parameter. If omitted, all
+                computed approximations are evaluated.
+
+        Returns:
+            numpy.ndarray or dict: An array with one column per ANOVA term. If
+            ``lam`` is omitted, a dictionary mapping each :math:`\lambda` to
+            such an array.
+
+        Raises:
+            ValueError: If the nodes in ``X`` lie outside the range required by
+                the basis.
         """
         setting = self.getSetting(settingnr, lam)
         if X is None:
@@ -625,11 +806,27 @@ class approx:
             return results
 
     def evaluateSHAPterms(self, settingnr=None, X=None, lam=None):
-        """
-        This function evaluates for each dimension the Shapley contribution to the overall approximation on the nodes of matrix X and regularization lam.
+        r"""Evaluate the Shapley contribution of each input variable.
 
-        - If lam is given: evaluate at X for specific lam.
-        - If lam is not given: evaluate at X for all lam.
+        The Shapley values quantify how much each variable contributes to the
+        predicted function value, while accounting for interactions between
+        variables.
+
+        Args:
+            settingnr (int, optional): Index of the setting to use.
+            X (numpy.ndarray, optional): Evaluation nodes. Defaults to the
+                nodes the approximation was built from.
+            lam (float, optional): Regularization parameter. If omitted, all
+                computed approximations are evaluated.
+
+        Returns:
+            numpy.ndarray or dict: An ``(M, d)`` array of per-variable
+            contributions. If ``lam`` is omitted, a dictionary mapping each
+            :math:`\lambda` to such an array.
+
+        Raises:
+            ValueError: If the nodes in ``X`` lie outside the range required by
+                the basis.
         """
         setting = self.getSetting(settingnr, lam)
 
@@ -698,3 +895,18 @@ class approx:
     get_ActiveSet = ANOVAanalysis.get_ActiveSet
     _ShapleyValues = ANOVAanalysis._ShapleyValues
     get_ShapleyValues = ANOVAanalysis.get_ShapleyValues
+    
+class test_class:
+    r"""This is a test class to exploro the working of this doc
+
+    Args:
+        docs (string, optional): test for the doc auto
+        
+
+    Returns:
+        Null
+        
+    Raises:
+        ValueError: doc error
+    """
+        
