@@ -105,8 +105,10 @@ class approx_setting:
             rather than a regression problem.
         basis_vect (list[str]): Per-dimension basis choice, used by the
             ``"mixed"`` basis.
-        algorithm (str): ``"nfft"`` or ``"direct"``.
-        device: Device passed through to the grouped transform.
+        algorithm (str): ``"nfft"``, ``"keops"`` or ``"direct"``.
+        device (str): Device used by the ``"keops"`` algorithm, allows user to manually switch between GPU or CPU computation. Supported values are: ``"cuda"`` 
+            for NVIDIA and CUDA-supporting devices, ``"mps"`` for Apple MPS-supporting devices, ``"cpu"`` for selecting CPU processing.
+            If ``None`` (default), the algorithm automatically selects the device based on availability, prioritizing GPU use.
         parallel (bool): Whether sub-transforms run threaded. Forced to
             ``False`` for any algorithm other than ``"nfft"``.
         lam (set[float]): Regularization parameters associated with the setting.
@@ -244,9 +246,11 @@ class approx:
             problem. Defaults to ``False``.
         basis_vect (list[str]): Per-dimension basis choice, required for
             ``basis="mixed"``.
-        algorithm (str): ``"nfft"`` or ``"direct"``. Defaults to ``"direct"``,
-            which resolves to ``"nfft"`` unless ``classification`` is set.
-        device: Device passed through to the grouped transform.
+        algorithm (str, optional): Defaults to ``"nfft"``. ``"nfft"`` for the fast transforms, ``"keops"`` for implicit matrix multiplication (allow GPU or CPU computation),
+            or ``"direct"`` to build the matrix explicitly. 
+        device: Device used by the ``"keops"`` algorithm, allows user to manually switch between GPU or CPU computation. Supported values are: ``"cuda"`` 
+            for NVIDIA and CUDA-supporting devices, ``"mps"`` for Apple MPS-supporting devices, ``"cpu"`` for selecting CPU processing.
+            If ``None`` (default), the algorithm automatically selects the device based on availability, prioritizing GPU use.
         parallel (bool): Run sub-transforms threaded. Defaults to ``True``;
             ignored unless ``algorithm`` is ``"nfft"``.
         ds (int, optional): Maximum interaction order, used to generate ``U``
