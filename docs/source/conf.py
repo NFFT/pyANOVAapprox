@@ -27,7 +27,7 @@ extensions = [
     "sphinx.ext.napoleon",  # Unterstützt Google/NumPy-Style Docstrings
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
-    "sphinx.ext.intersphinx",  
+    "sphinx.ext.intersphinx",
     "myst_parser",
 ]
 
@@ -61,5 +61,5 @@ html_theme_options = {
     "navigation_depth": 5,
 }
 html_css_files = [
-    'custom.css',
+    "custom.css",
 ]

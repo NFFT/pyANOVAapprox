@@ -106,7 +106,7 @@ class approx_setting:
         basis_vect (list[str]): Per-dimension basis choice, used by the
             ``"mixed"`` basis.
         algorithm (str): ``"nfft"``, ``"keops"`` or ``"direct"``.
-        device (str): Device used by the ``"keops"`` algorithm, allows user to manually switch between GPU or CPU computation. Supported values are: ``"cuda"`` 
+        device (str): Device used by the ``"keops"`` algorithm, allows user to manually switch between GPU or CPU computation. Supported values are: ``"cuda"``
             for NVIDIA and CUDA-supporting devices, ``"mps"`` for Apple MPS-supporting devices, ``"cpu"`` for selecting CPU processing.
             If ``None`` (default), the algorithm automatically selects the device based on availability, prioritizing GPU use.
         parallel (bool): Whether sub-transforms run threaded. Forced to
@@ -247,8 +247,8 @@ class approx:
         basis_vect (list[str]): Per-dimension basis choice, required for
             ``basis="mixed"``.
         algorithm (str, optional): Defaults to ``"nfft"``. ``"nfft"`` for the fast transforms, ``"keops"`` for implicit matrix multiplication (allow GPU or CPU computation),
-            or ``"direct"`` to build the matrix explicitly. 
-        device: Device used by the ``"keops"`` algorithm, allows user to manually switch between GPU or CPU computation. Supported values are: ``"cuda"`` 
+            or ``"direct"`` to build the matrix explicitly.
+        device: Device used by the ``"keops"`` algorithm, allows user to manually switch between GPU or CPU computation. Supported values are: ``"cuda"``
             for NVIDIA and CUDA-supporting devices, ``"mps"`` for Apple MPS-supporting devices, ``"cpu"`` for selecting CPU processing.
             If ``None`` (default), the algorithm automatically selects the device based on availability, prioritizing GPU use.
         parallel (bool): Run sub-transforms threaded. Defaults to ``True``;
