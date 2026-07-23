@@ -18,14 +18,13 @@ jobs:
       - name: Install dependencies
         run: |
           pip install sphinx sphinx_rtd_theme myst_parser
-          # WICHTIG: Wenn dein Code Abhängigkeiten hat (z.B. numpy, scipy), 
-          # installiere sie hier, sonst kann 'autodoc' den Code nicht importieren!
-          # pip install -e . 
+          # WICHTIG: autodoc importiert den Code, um die Docstrings zu lesen.
+          # Ohne diese Zeile schlaegt der Import fehl und die Seiten bleiben leer.
+          pip install -e .
 
       - name: Sphinx build
         run: |
           cd docs
-          sphinx-apidoc -o ./source ../src -f
           make html
 
       - name: Deploy to GitHub Pages
