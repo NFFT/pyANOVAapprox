@@ -648,7 +648,7 @@ class approx:
         if (
             lam is not None
         ):  # evaluateSHAPterms( a::approx; X::Matrix{Float64}, λ::Float64 )::Union{Matrix{ComplexF64},Matrix{Float64}}
-            terms = self.evaluateANOVAterms(X, lam)
+            terms = self.evaluateANOVAterms(X=X, lam=lam)
 
             Dtype = np.complex128 if setting.basis == "per" else np.float64
             values = np.zeros((M, d), dtype=Dtype)
@@ -662,7 +662,7 @@ class approx:
         else:  # evaluateSHAPterms( a::approx; X::Matrix{Float64} )::Dict{Float64,Union{Matrix{ComplexF64},Matrix{Float64}}}
             results = {}
             for l in self.lam.keys():
-                terms = self.evaluateANOVAterms(X, l)
+                terms = self.evaluateANOVAterms(X=X, lam=l)
 
                 Dtype = np.complex128 if setting.basis == "per" else np.float64
                 values = np.zeros((M, d), dtype=Dtype)

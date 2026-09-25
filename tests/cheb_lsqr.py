@@ -48,7 +48,7 @@ ads.get_GSI(Dict=True)
 ads.evaluate()
 ads.evaluate(X=X_test.T)
 
-print("== PERIODIC FISTA ==")
+print("== CHEBYSHEV LSQR ==")
 print("L2 ds: ", err_L2_ds)
 print("L2 U: ", err_L2_U)
 print("l2 ds: ", err_l2_ds)
