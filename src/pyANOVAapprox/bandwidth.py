@@ -8,7 +8,7 @@ def getfcu(ghat, u):
     # fcu = ghat[u].reshape(bws[::-1] - 1)
     # fcu = np.permute_dims(fcu, range(len(bws))[::-1])
     fcu = ghat[u].reshape(bws - 1)
-    fcu = np.permute_dims(fcu, range(len(bws)))
+    fcu = np.transpose(fcu, axes=tuple(range(len(bws))))
     #if(u == (3,7)):
     #    print(fcu)
 

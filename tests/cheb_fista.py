@@ -41,7 +41,7 @@ err_l2_rand_ds = ads.get_l2_error(X=X_test.T, y=y_test)[0.0]
 err_l2_rand_U = aU.get_l2_error(X=X_test.T, y=y_test)[0.0]
 
 
-print("== PERIODIC FISTA ==")
+print("== CHEBYSHEV FISTA ==")
 print("L2 ds: ", err_L2_ds)
 print("L2 U: ", err_L2_U)
 print("l2 ds: ", err_l2_ds)
