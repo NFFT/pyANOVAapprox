@@ -420,7 +420,7 @@ class approx:
         D = dict([(u, tuple([1.0] * len(u))) for u in setting.U])
         t = dict([(u, tuple([1.0] * len(u))) for u in setting.U])
         fix = dict([(u, tuple([False] * len(u))) for u in setting.U])
-        bw =  [tuple([0] * len(u)) for u in setting.U]
+        bw = [tuple([0] * len(u)) for u in setting.U]
 
         if verbosity > 3:
             if not os.path.exists("log"):

@@ -9,7 +9,7 @@ def getfcu(ghat, u):
     # fcu = np.permute_dims(fcu, range(len(bws))[::-1])
     fcu = ghat[u].reshape(bws - 1)
     fcu = np.permute_dims(fcu, range(len(bws)))
-    #if(u == (3,7)):
+    # if(u == (3,7)):
     #    print(fcu)
 
     return fcu
@@ -32,10 +32,11 @@ def getaxissum(ghat, u, j, system):
     else:
         raise ValueError("For this basis is estimate rates not implemented")
     # fcuj = np.concatenate(fcuj[math.ceil(bws[j]/2):] + [fcuj[0]]) + fcuj[math.ceil(bws[j]/2)-1::-1]
-    #if(u == (3,7)):
+    # if(u == (3,7)):
     #    print(j,fcuj)
 
     return fcuj
+
 
 def compute_bandwidth(B, D, t, fix, oldbw):
     us = set(D.keys()) - {()}
@@ -56,33 +57,20 @@ def compute_bandwidth(B, D, t, fix, oldbw):
                 bw[u][j] = oldbw[u][j]
 
     minfreqs = sum(
-        math.prod(
-            (oldbw[u][j] - 1) if fix[u][j] else (6 - 1)
-            for j in range(len(u))
-        )
+        math.prod((oldbw[u][j] - 1) if fix[u][j] else (6 - 1) for j in range(len(u)))
         for u in us
     )
     if B < minfreqs:
         raise ValueError(f"Budget too small: {B} < {minfreqs}")
 
     def A_u(u):
-        return sum(
-            0.5 / t[u][j]
-            for j in range(len(u))
-            if not fix[u][j]
-        )
+        return sum(0.5 / t[u][j] for j in range(len(u)) if not fix[u][j])
 
     def B_u(u):
         prod_C = math.prod(
-            D[u][j] ** (0.5 / t[u][j])
-            for j in range(len(u))
-            if not fix[u][j]
+            D[u][j] ** (0.5 / t[u][j]) for j in range(len(u)) if not fix[u][j]
         )
-        prod_fix = math.prod(
-            (bw[u][j] - 1)
-            for j in range(len(u))
-            if fix[u][j]
-        )
+        prod_fix = math.prod((bw[u][j] - 1) for j in range(len(u)) if fix[u][j])
         return prod_C * prod_fix
 
     def fun_lmbda_u(lmbda, u):
@@ -92,7 +80,7 @@ def compute_bandwidth(B, D, t, fix, oldbw):
             # Alle Einträge in u sind fixiert: kein Beitrag zur Optimierung
             return 0.0
         exp = 1.0 / (1.0 + Au)
-        return Bu ** exp * (lmbda * Au) ** (-Au * exp)
+        return Bu**exp * (lmbda * Au) ** (-Au * exp)
 
     def fun_lmbda(log_lmbda):
         lmbda = math.exp(log_lmbda)
@@ -214,14 +202,14 @@ def estimate_rates(self, lam, settingnr=None, verbosity=0):
             else:
                 idx = min(len(axissum), len(axissum) - idx + 2)
                 Duj, tuj = fitrate_log((np.cumsum(axissum[::-1])[::-1])[0:idx])
-                #print(u,j,tuj)
+                # print(u,j,tuj)
                 if abs(tuj) < 0.004:
                     D[u][j] = math.nan
                     t[u][j] = math.nan
                 else:
                     D[u][j] = Duj
                     t[u][j] = -tuj / 2
-    
+
                     if verbosity > 5:
                         x = np.arange(1, idx + 1)
                         ax.plot(
